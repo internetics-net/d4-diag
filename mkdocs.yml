@@ -1,0 +1,72 @@
+site_name: D4-Diag Documentation
+site_description: Python code analysis and diagram generation tool
+site_author: D4-Diag Team
+site_url: https://internetics-net.github.io/d4-diag/
+repo_url: https://github.com/internetics-net/d4-diag
+repo_name: d4-diag
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+  - User Guide:
+      - Analyzing Code: user-guide/analyzing-code.md
+      - Viewing Diagrams: user-guide/viewing-diagrams.md
+      - Diagram Types: user-guide/diagram-types.md
+  - Reference:
+      - CLI Reference: reference/cli.md
+      - API Reference: reference/api.md
+  - Examples: examples.md
+  - Contributing: contributing.md
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/internetics-net/d4-diag

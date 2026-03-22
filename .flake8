@@ -1,0 +1,17 @@
+[flake8]
+max-line-length = 100
+extend-ignore = E203, E266, E501, W503, F541, D
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    .tox,
+    docs/_build
+max-complexity = 20
+per-file-ignores =
+    __init__.py:F401
+    viewer_mermaid.py:F401

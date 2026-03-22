@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "d4-diag"
+version = "0.1.0"
+description = ""
+authors = ["Pedja Blagojevic <pb@internetics.net>"]
+readme = "README.md"
+packages = [{include = "d4_diag", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.8.1"
+
+[tool.poetry.group.cli.dependencies]
+click = "^8.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+mkdocs = "^1.5.0"
+mkdocs-material = "^9.5.0"
+black = "^24.0.0"
+flake8 = "^7.0.0"
+pre-commit = "^3.5.0"
+
+[tool.poetry.scripts]
+main = "d4_diag.main:main"
+d4-diag = "d4_diag.main:main"
+viewer = "d4_diag.viewer_mermaid:main"
+tests = "tests.run_tests:main"
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | \.eggs
+  | \.tox
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
