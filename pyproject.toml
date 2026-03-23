@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "d4-diag"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["Pedja Blagojevic <pb@internetics.net>"]
 readme = "README.md"
