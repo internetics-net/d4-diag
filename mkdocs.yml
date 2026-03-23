@@ -57,6 +57,7 @@ nav:
       - Analyzing Code: user-guide/analyzing-code.md
       - Viewing Diagrams: user-guide/viewing-diagrams.md
       - Diagram Types: user-guide/diagram-types.md
+      - Programmatic Usage: user-guide/programmatic-usage.md
   - Diagrams:
       - Architecture: diagrams/architecture.md
       - Class Diagram: diagrams/class_diagram.md
@@ -65,7 +66,12 @@ nav:
       - CLI Reference: reference/cli.md
       - API Reference: reference/api.md
   - Examples: examples.md
-  - Contributing: contributing.md
+  - Contributing:
+      - Overview: contributing.md
+      - Code Quality: contributing/code-quality.md
+
+exclude_docs: |
+  *.mmd
 
 plugins:
   - search

@@ -1,47 +1,52 @@
 # Quick Start
 
-Get up and running with D4-Diag in 5 minutes.
+Get up and running with d4-diag in 5 minutes.
 
-## Basic Usage
+## 1. Install
 
-### 1. Analyze a Project
+```bash
+pip install d4-diag
+```
 
-Point D4-Diag at any Python project or file:
+## 2. Analyze a Project
+
+Point d4-diag at any Python project directory:
 
 ```bash
 # Analyze entire project
-poetry run main /path/to/project
+d4-diag analyze /path/to/project
 
 # Analyze specific directory
-poetry run main /path/to/project/src
+d4-diag analyze /path/to/project/src
 
-# Analyze single file
-poetry run main script.py
+# Analyze current directory
+d4-diag analyze .
+
+# Analyze with verbose output
+d4-diag analyze . --verbose
 ```
 
-### 2. View the Diagrams
+## 3. View the Diagrams
 
-D4-Diag generates diagrams in `<project>/docs/diagrams/`:
+Open the interactive viewer in your browser:
 
 ```bash
-poetry run viewer /path/to/project/docs/diagrams
+d4-diag viewer /path/to/project/docs/diagrams
 ```
 
 Your browser opens showing three tabs:
-- **Architecture** - File structure with classes/functions
+
+- **Architecture** - File structure with classes and functions
 - **Class Diagram** - UML-style class relationships
 - **Module Dependencies** - Import graph
 
 ## Example Walkthrough
 
-Let's analyze a sample project:
-
 ```bash
-# Create a simple Python project
+# Create a sample project
 mkdir my-project
 cd my-project
 
-# Create some Python files
 cat > models.py << 'EOF'
 class User:
     def __init__(self, name):
@@ -70,11 +75,11 @@ if __name__ == "__main__":
     main()
 EOF
 
-# Analyze it
-poetry run main .
+# Analyze
+d4-diag analyze .
 
 # View diagrams
-poetry run viewer docs/diagrams
+d4-diag viewer docs/diagrams
 ```
 
 ## What You'll See
@@ -105,25 +110,16 @@ main.py ──> models.py
 
 ## Common Patterns
 
-### Analyze Multiple Paths
-
 ```bash
-poetry run main src/ tests/ scripts/
+# Analyze multiple paths
+d4-diag analyze src/ tests/ scripts/
+
+# Custom output directory
+d4-diag analyze ./src --output-dir ./docs/diagrams
+
+# Run as Python module (alternative)
+python -m d4_diag analyze .
 ```
-
-### Analyze Current Directory
-
-```bash
-cd /path/to/project
-poetry run main .
-```
-
-### Custom Output Location
-
-Diagrams are always saved to `<project_root>/docs/diagrams/`. The project root is determined by:
-1. First directory argument (if analyzing a directory)
-2. Parent directory of first file (if analyzing files)
-3. Current working directory (as fallback)
 
 ## Next Steps
 

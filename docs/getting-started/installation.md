@@ -3,78 +3,76 @@
 ## Prerequisites
 
 - Python 3.8 or higher
-- Poetry (recommended) or pip
+- pip (comes with Python)
 
-## Using Poetry (Recommended)
-
-Poetry manages dependencies and virtual environments automatically.
-
-### Install Poetry
-
-If you don't have Poetry installed:
+## Install
 
 ```bash
-# On Windows (PowerShell)
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
-
-# On macOS/Linux
-curl -sSL https://install.python-poetry.org | python3 -
+pip install d4-diag
 ```
 
-### Install D4-Diag
+## Verify
 
 ```bash
-# Clone the repository
-git clone https://github.com/internetics-net/d4-diag.git
-cd d4-diag
-
-# Install dependencies
-poetry install
-
-# Verify installation
-poetry run main --help
+d4-diag --version
+d4-diag --help
 ```
 
-## Using pip
-
-If you prefer pip:
+## Upgrade
 
 ```bash
-# Clone the repository
-git clone https://github.com/internetics-net/d4-diag.git
-cd d4-diag
+pip install --upgrade d4-diag
+```
 
-# Create virtual environment
+## Uninstall
+
+```bash
+pip uninstall d4-diag
+```
+
+## Isolated Install (recommended)
+
+Use `pipx` to install d4-diag in an isolated environment so it doesn't interfere with other packages:
+
+```bash
+pip install pipx
+pipx install d4-diag
+```
+
+## Virtual Environment
+
+If you prefer a project-level virtual environment:
+
+```bash
+# Create and activate
 python -m venv venv
 
-# Activate virtual environment
-# On Windows
+# Windows
 venv\Scripts\activate
-# On macOS/Linux
+
+# macOS/Linux
 source venv/bin/activate
 
-# Install in development mode
-pip install -e .
-
-# Verify installation
-python -m d4_diag.main --help
+# Install
+pip install d4-diag
 ```
 
-## Verify Installation
+## Troubleshooting
 
-Test that everything works:
+**`d4-diag: command not found` after install**
+
+Your Python scripts directory may not be on your PATH. Try running as a module instead:
 
 ```bash
-# Analyze the d4-diag project itself
-poetry run main .
-
-# View the generated diagrams
-poetry run viewer docs/diagrams
+python -m d4_diag --help
 ```
 
-Your browser should open showing three interactive diagrams.
+Or add the scripts directory to PATH:
+
+- **Windows**: Add `%APPDATA%\Python\PythonXX\Scripts` to your PATH
+- **macOS/Linux**: Add `~/.local/bin` to your PATH
 
 ## Next Steps
 
-- [Quick Start Guide](quick-start.md) - Learn basic usage
+- [Quick Start Guide](quick-start.md) - Run your first analysis
 - [Analyzing Code](../user-guide/analyzing-code.md) - Detailed analysis options

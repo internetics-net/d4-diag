@@ -19,33 +19,17 @@ d4-diag analyzes Python codebases and generates comprehensive diagrams showing m
 
 ## 📦 Installation
 
-### Using Poetry (Recommended)
-
 ```bash
-# Clone the repository
-git clone https://github.com/internetics-net/d4-diag.git
-cd d4-diag
-
-# Install dependencies
-poetry install
-
-# Activate virtual environment
-poetry shell
+pip install d4-diag
 ```
 
-### Development Installation
+Requires Python 3.8+. Verify the install:
 
 ```bash
-# Install with development dependencies
-poetry install --with dev
-
-# Install pre-commit hooks
-poetry run pre-commit install
+d4-diag --version
 ```
 
 ## 🎯 Usage
-
-### Modern CLI Interface
 
 ```bash
 # Analyze a project directory
@@ -57,9 +41,6 @@ d4-diag analyze ./src --verbose
 # Specify custom output directory
 d4-diag analyze ./src --output-dir ./docs/diagrams
 
-# Set custom project root
-d4-diag analyze ./src --project-root /path/to/project
-
 # Analyze multiple paths
 d4-diag analyze ./src ./tests --verbose
 
@@ -70,29 +51,19 @@ d4-diag viewer ./docs/diagrams
 d4-diag viewer ./docs/diagrams --no-browser
 ```
 
-### Backward Compatibility
-
-Legacy usage patterns still work:
+### Run as Python Module
 
 ```bash
-# Old style (still supported)
-d4-diag ./src
-d4-diag ./src --verbose
+python -m d4_diag analyze ./src
+python -m d4_diag viewer ./docs/diagrams
 ```
 
-### Poetry Commands
+### Get Help
 
 ```bash
-# Run using poetry
-poetry run d4-diag analyze ./src
-poetry run d4-diag viewer ./docs/diagrams
-
-# Run tests
-poetry run tests
-
-# Alternative script names
-poetry run main ./src
-poetry run viewer ./docs/diagrams
+d4-diag --help
+d4-diag analyze --help
+d4-diag viewer --help
 ```
 
 ## 📊 Generated Diagrams
@@ -123,77 +94,11 @@ d4-diag viewer ./docs/diagrams
 # - Easy navigation
 ```
 
-## 🧪 Testing
-
-d4-diag includes a comprehensive test suite:
-
-```bash
-# Run all tests
-poetry run tests
-
-# Run specific test categories
-poetry run pytest tests/test_utils.py -v
-poetry run pytest tests/test_integration.py -v
-
-# Run with coverage
-poetry run pytest tests/ --cov=d4_diag --cov-report=term-missing
-```
-
-**Test Coverage:**
-- ✅ **Utility Functions**: 24/24 tests passing
-- ✅ **CLI Interface**: Core functionality verified
-- ✅ **Integration Tests**: End-to-end workflows
-- ✅ **Error Handling**: Comprehensive edge case coverage
-
-## 🔧 Development
-
-### Code Quality Tools
-
-```bash
-# Format code
-poetry run black .
-
-# Lint code
-poetry run flake8 src/
-
-# Type checking (if installed)
-poetry run mypy src/
-
-# Run all quality checks
-poetry run pre-commit run --all-files
-```
-
-### Project Structure
-
-```
-d4-diag/
-├── src/d4_diag/           # Source code
-│   ├── main.py           # CLI interface and orchestration
-│   ├── generate_mermaid.py  # Core analysis engine
-│   ├── utils.py          # Utility functions
-│   └── viewer_mermaid.py # Interactive HTML viewer
-├── tests/                # Comprehensive test suite
-│   ├── test_utils.py     # Utility function tests
-│   ├── test_generate_mermaid.py  # Core engine tests
-│   ├── test_main.py      # CLI interface tests
-│   └── test_integration.py  # End-to-end tests
-├── docs/diagrams/        # Generated diagram output
-└── pyproject.toml        # Poetry configuration
-```
-
-### Architecture Highlights
-
-- **Modular Design**: Clear separation of concerns with focused modules
-- **Error Resilience**: Comprehensive error handling and recovery
-- **Performance Optimized**: Efficient file processing and memory usage
-- **Type Safety**: Full type hints for better IDE support
-- **Test Coverage**: Extensive test suite with high coverage
-
 ## 📋 Requirements
 
 - **Python**: 3.8+ (tested on 3.8-3.14)
-- **Poetry**: For dependency management
-- **Optional**: Click (CLI framework) - automatically installed
+- **pip**: For installation
+- Dependencies are installed automatically with `pip install d4-diag`
 
 ## 🎨 Examples
 
@@ -307,16 +212,6 @@ d4-diag --version
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass: `poetry run tests`
-6. Run code quality checks: `poetry run pre-commit run --all-files`
-7. Submit a Pull Request
-
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
@@ -325,7 +220,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - **Mermaid.js**: For excellent diagram rendering
 - **Click**: For the beautiful CLI framework
-- **Poetry**: For dependency management excellence
 - **pytest**: For the robust testing framework
 
 ---

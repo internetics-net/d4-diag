@@ -7,7 +7,13 @@ Learn how to use D4-Diag's analysis capabilities effectively.
 ### Basic Syntax
 
 ```bash
-poetry run main <path> [path2 ...]
+d4-diag analyze <path> [path2 ...]
+```
+
+Or as a Python module:
+
+```bash
+python -m d4_diag analyze <path> [path2 ...]
 ```
 
 ### Arguments
@@ -19,16 +25,22 @@ poetry run main <path> [path2 ...]
 
 ```bash
 # Single file
-poetry run main app.py
+d4-diag analyze app.py
 
 # Single directory
-poetry run main src/
+d4-diag analyze src/
 
 # Multiple paths
-poetry run main src/ tests/ scripts/
+d4-diag analyze src/ tests/ scripts/
 
 # Current directory
-poetry run main .
+d4-diag analyze .
+
+# With verbose output
+d4-diag analyze src/ --verbose
+
+# Custom output directory
+d4-diag analyze src/ --output-dir ./docs/diagrams
 ```
 
 ## What Gets Analyzed

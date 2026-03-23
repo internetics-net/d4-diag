@@ -5,17 +5,26 @@ The D4-Diag viewer provides an interactive web interface for browsing generated 
 ## Starting the Viewer
 
 ```bash
-poetry run viewer <diagrams_directory>
+d4-diag viewer <diagrams_directory>
+```
+
+Or as a Python module:
+
+```bash
+python -m d4_diag viewer <diagrams_directory>
 ```
 
 ### Example
 
 ```bash
 # After analyzing a project
-poetry run main /path/to/project
+d4-diag analyze /path/to/project
 
 # View the diagrams
-poetry run viewer /path/to/project/docs/diagrams
+d4-diag viewer /path/to/project/docs/diagrams
+
+# Open without launching browser automatically
+d4-diag viewer /path/to/project/docs/diagrams --no-browser
 ```
 
 ## Viewer Interface
