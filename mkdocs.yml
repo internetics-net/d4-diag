@@ -42,7 +42,9 @@ markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      auto_append:
+        - includes.txt
   - attr_list
   - md_in_html
   - toc:
@@ -57,6 +59,10 @@ nav:
       - Analyzing Code: user-guide/analyzing-code.md
       - Viewing Diagrams: user-guide/viewing-diagrams.md
       - Diagram Types: user-guide/diagram-types.md
+  - Diagrams:
+      - Architecture: diagrams/architecture.md
+      - Class Diagram: diagrams/class_diagram.md
+      - Module Dependencies: diagrams/module_deps.md
   - Reference:
       - CLI Reference: reference/cli.md
       - API Reference: reference/api.md
