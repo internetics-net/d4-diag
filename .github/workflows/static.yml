@@ -1,0 +1,17 @@
+# This workflow has been replaced by docs.yml
+# It is kept here as a placeholder and will not run.
+name: Static (disabled)
+
+on:
+  workflow_dispatch:
+    inputs:
+      disabled:
+        description: "This workflow is disabled. Use docs.yml instead."
+        required: false
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "disabled"
