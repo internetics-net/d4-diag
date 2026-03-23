@@ -2,50 +2,62 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://internetics-net.github.io/d4-diag/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/contributing/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/examples/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/contributing/code-quality/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
+    </url>
+    <url>
+         <loc>https://internetics-net.github.io/d4-diag/diagrams/architecture/</loc>
+         <lastmod>2026-03-23</lastmod>
+    </url>
+    <url>
+         <loc>https://internetics-net.github.io/d4-diag/diagrams/class_diagram/</loc>
+         <lastmod>2026-03-23</lastmod>
+    </url>
+    <url>
+         <loc>https://internetics-net.github.io/d4-diag/diagrams/module_deps/</loc>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/getting-started/installation/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/getting-started/quick-start/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/reference/api/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/reference/cli/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/user-guide/analyzing-code/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/user-guide/diagram-types/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/user-guide/programmatic-usage/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
     <url>
          <loc>https://internetics-net.github.io/d4-diag/user-guide/viewing-diagrams/</loc>
-         <lastmod>2026-03-22</lastmod>
+         <lastmod>2026-03-23</lastmod>
     </url>
 </urlset>
