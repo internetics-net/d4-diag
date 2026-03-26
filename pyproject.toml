@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "d4-diag"
-version = "0.1.2"
-description = ""
+version = "0.1.4"
+description = "Python code visualization tool that generates interactive Mermaid diagrams from static analysis"
 authors = ["Pedja Blagojevic <pb@internetics.net>"]
 readme = "README.md"
 packages = [{include = "d4_diag", from = "src"}]
