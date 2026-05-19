@@ -3,7 +3,14 @@
 import ast
 from pathlib import Path
 
-from d4_diag.utils import EXCLUDED_DIRS, _is_excluded_dir, find_python_files, get_base_name, qlabel, sanitize_id
+from d4_diag.utils import (
+    EXCLUDED_DIRS,
+    _is_excluded_dir,
+    find_python_files,
+    get_base_name,
+    qlabel,
+    sanitize_id,
+)
 
 
 class TestSanitizeId:

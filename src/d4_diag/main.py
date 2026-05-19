@@ -49,9 +49,7 @@ def _validate_input_paths(paths: List[Path]) -> None:
         sys.exit(EXIT_USAGE)
 
 
-def _resolve_project_root(
-    project_root: Optional[Path], paths: List[Path], verbose: bool
-) -> Path:
+def _resolve_project_root(project_root: Optional[Path], paths: List[Path], verbose: bool) -> Path:
     """Resolve and validate project root directory."""
     if project_root:
         if not project_root.exists():
