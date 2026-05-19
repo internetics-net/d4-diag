@@ -1,0 +1,3 @@
+ignore:
+  - dependency-name: "pymdown-extensions"
+    versions: ["<10.21.3"]
