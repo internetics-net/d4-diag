@@ -1,3 +1,5 @@
+import html
+import re
 import sys
 import tempfile
 import webbrowser
@@ -36,9 +38,6 @@ def extract_mermaid_code(content: str) -> str:
     """Extract Mermaid code from markdown code blocks"""
     content = content.strip()
 
-    # Look for mermaid code blocks with optional indentation
-    import re
-
     # Pattern to match ```mermaid ... ``` with optional indentation
     pattern = r"^\s*```mermaid\n(.*?)\n\s*```"
     match = re.search(pattern, content, re.MULTILINE | re.DOTALL)
@@ -48,6 +47,34 @@ def extract_mermaid_code(content: str) -> str:
     else:
         # No mermaid code found
         return ""
+
+
+def _escape_html(text: str) -> str:
+    return html.escape(text, quote=True)
+
+
+def read_project_name(start_dir: Path) -> str:
+    """Resolve a display name from pyproject.toml or directory name."""
+    current = start_dir.resolve()
+    while True:
+        pyproject = current / "pyproject.toml"
+        if pyproject.is_file():
+            try:
+                raw = pyproject.read_text(encoding="utf-8")
+            except OSError:
+                return current.name
+            match = re.search(
+                r'^\s*name\s*=\s*"([^"]+)"',
+                raw,
+                re.MULTILINE,
+            )
+            if match:
+                return match.group(1)
+            return current.name
+        if current.parent == current:
+            break
+        current = current.parent
+    return start_dir.name
 
 
 def generate_html_viewer(
@@ -65,7 +92,7 @@ def generate_html_viewer(
         mermaid.initialize({
             startOnLoad: false,
             theme: 'default',
-            securityLevel: 'loose',
+            securityLevel: 'strict',
             maxTextSize: 5000000,
             maxEdges: 5000,
             flowchart: {
@@ -266,31 +293,27 @@ def generate_html_viewer(
         }
 
         function showDiagram(diagramId, btn) {
-            // Hide all diagrams
             document.querySelectorAll('.diagram-container').forEach(c => {
                 c.classList.remove('active');
             });
-
-            // Remove active class from all tabs
             document.querySelectorAll('.tab').forEach(t => {
                 t.classList.remove('active');
             });
-
-            // Show selected diagram
             const container = document.getElementById(diagramId);
+            if (!container) return;
             container.classList.add('active');
-            btn.classList.add('active');
-
-            // Render mermaid diagram now that container is visible
+            if (btn) btn.classList.add('active');
             renderMermaid(container);
         }
 
-        // Show first diagram by default
         window.addEventListener('load', function() {
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    showDiagram(btn.dataset.diagramId, btn);
+                });
+            });
             const firstTab = document.querySelector('.tab');
-            if (firstTab) {
-                firstTab.click();
-            }
+            if (firstTab) firstTab.click();
         });
     </script>
 </body>
@@ -310,20 +333,19 @@ def generate_html_viewer(
             diagram_id = f"diagram-{i}"
 
             # Create tab
+            safe_name = _escape_html(name)
             tabs.append(
-                f'<button class="tab" onclick="showDiagram(\'{diagram_id}\', this)">{name}</button>'
+                f'<button type="button" class="tab" data-diagram-id="{diagram_id}">'
+                f"{safe_name}</button>"
             )
 
-            # Create diagram section
-            mermaid_code = extract_mermaid_code(content)
+            mermaid_code = _escape_html(extract_mermaid_code(content))
             diagram_sections.append(
                 f"""
         <div id="{diagram_id}" class="diagram-container">
-            <h2 class="diagram-title">{name}</h2>
+            <h2 class="diagram-title">{safe_name}</h2>
             <div class="diagram">
-                <div class="mermaid">
-{mermaid_code}
-                </div>
+                <div class="mermaid">{mermaid_code}</div>
             </div>
         </div>"""
             )
@@ -335,7 +357,7 @@ def generate_html_viewer(
     html_content = html_template.replace("{tabs_html}", tabs_html)
     html_content = html_content.replace("{diagrams_html}", diagrams_html)
     html_content = html_content.replace("{no_diagrams_html}", no_diagrams_html)
-    html_content = html_content.replace("{project_name}", project_name)
+    html_content = html_content.replace("{project_name}", _escape_html(project_name))
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
@@ -363,48 +385,8 @@ def view_diagrams(diagrams_dir: str, open_browser: bool = True):
         if content:
             diagrams[file_path.stem] = content
 
-    # Extract project name from directory path
-    import os
-
-    # Try to get a meaningful project name
     diagrams_path = Path(diagrams_dir)
-
-    # First try to get the directory containing pyproject.toml
-    current_dir = diagrams_path
-    project_name = "Project"
-
-    # Look up the directory tree for pyproject.toml or setup.py
-    while current_dir != current_dir.parent:
-        if (current_dir / "pyproject.toml").exists():
-            try:
-                # Try to import toml, but handle gracefully if not available
-                try:
-                    import toml
-
-                    with open(current_dir / "pyproject.toml", "r", encoding="utf-8") as f:
-                        config = toml.load(f)
-                        project_name = (
-                            config.get("tool", {}).get("poetry", {}).get("name", current_dir.name)
-                        )
-                    break
-                except ImportError:
-                    # If toml is not available, just use the directory name
-                    project_name = current_dir.name
-                    break
-                except Exception:
-                    project_name = current_dir.name
-                    break
-            except Exception:
-                project_name = current_dir.name
-                break
-        elif (current_dir / "setup.py").exists():
-            project_name = current_dir.name
-            break
-        current_dir = current_dir.parent
-
-    # Fallback to current directory name if no project file found
-    if project_name == "Project":
-        project_name = os.path.basename(os.getcwd())
+    project_name = read_project_name(diagrams_path)
 
     # Generate HTML viewer
     with tempfile.NamedTemporaryFile(

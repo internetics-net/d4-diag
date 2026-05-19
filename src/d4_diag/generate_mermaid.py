@@ -99,25 +99,48 @@ class CodeMapAnalyzer:
                     self._resolve_import(rel, alias.name)
 
             elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    info["imports"].append(node.module)
-                    self._resolve_import(rel, node.module, level=node.level)
+                self._record_import_from(rel, info, node)
 
         self.files[rel] = info
+
+    def _package_parts_for_file(self, source_rel: str) -> List[str]:
+        """Dotted package components for a source file (no trailing .py)."""
+        source_mod = source_rel.replace("/", ".").replace(".py", "")
+        if source_mod.endswith(".__init__"):
+            source_mod = source_mod[:-9]
+        return source_mod.split(".") if source_mod else []
+
+    def _record_import_from(self, source_rel: str, info: dict, node: ast.ImportFrom) -> None:
+        """Record ImportFrom nodes, including relative ``from . import`` forms."""
+        if node.level > 0:
+            pkg_parts = self._package_parts_for_file(source_rel)
+            pkg_parts = pkg_parts[: max(0, len(pkg_parts) - node.level)]
+            if node.module:
+                full_mod = (
+                    ".".join(pkg_parts + node.module.split(".")) if pkg_parts else node.module
+                )
+                info["imports"].append(full_mod)
+                self._resolve_import(source_rel, module_str=full_mod, level=0)
+                for alias in node.names:
+                    if alias.name != "*":
+                        member = f"{full_mod}.{alias.name}"
+                        info["imports"].append(member)
+                        self._resolve_import(source_rel, module_str=member, level=0)
+            else:
+                for alias in node.names:
+                    if alias.name == "*":
+                        continue
+                    full_mod = ".".join(pkg_parts + [alias.name]) if pkg_parts else alias.name
+                    info["imports"].append(full_mod)
+                    self._resolve_import(source_rel, module_str=full_mod, level=0)
+        elif node.module:
+            info["imports"].append(node.module)
+            self._resolve_import(source_rel, module_str=node.module, level=0)
 
     def _resolve_import(self, source_rel: str, module_str: str, level: int = 0):
         """Try to resolve an import to a project-local file."""
         if not module_str:
             return
-
-        # For relative imports (level > 0), resolve against the source package
-        if level > 0:
-            # Compute the package of the source file
-            source_mod = source_rel.replace("/", ".").replace(".py", "")
-            pkg_parts = source_mod.split(".")
-            # level=1 means current package, level=2 means parent, etc.
-            pkg_parts = pkg_parts[: max(0, len(pkg_parts) - level)]
-            module_str = ".".join(pkg_parts + [module_str]) if pkg_parts else module_str
 
         # try full match, then progressively shorter prefixes
         parts = module_str.split(".")
@@ -220,15 +243,16 @@ class CodeMapAnalyzer:
                 lines.append(f"        +{method}()")
             lines.append("    }")
 
-        # inheritance - need to match base names to qualified names
-        name_to_qualified = {cls["name"]: qname for qname, (cls, _) in all_classes.items()}
-        for qualified_name, (cls, rel) in all_classes.items():
+        # inheritance — only link bases that exist in the analyzed project
+        name_to_qualified: Dict[str, str] = {}
+        for qname, (cls, _) in all_classes.items():
+            name_to_qualified.setdefault(cls["name"], qname)
+        for qualified_name, (cls, _) in all_classes.items():
             safe_name = re.sub(r"[^\w]", "_", qualified_name)
             for base in cls["bases"]:
-                # Try to find the base class in our collected classes
-                base_qualified = name_to_qualified.get(base, base)
-                safe_base = re.sub(r"[^\w]", "_", base_qualified)
-                if base_qualified in all_classes or base in name_to_qualified:
+                base_qualified = name_to_qualified.get(base)
+                if base_qualified and base_qualified in all_classes:
+                    safe_base = re.sub(r"[^\w]", "_", base_qualified)
                     lines.append(f"    {safe_base} <|-- {safe_name}")
 
         lines.append("```")

@@ -3,8 +3,10 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from click.testing import CliRunner
 
+from d4_diag import __version__
 from d4_diag.main import (
     EXIT_ERROR,
     EXIT_SUCCESS,
@@ -36,7 +38,7 @@ class TestCLI:
         """Test CLI version command."""
         result = self.runner.invoke(cli, ["--version"])
         assert result.exit_code == EXIT_SUCCESS
-        assert "0.1.0" in result.output
+        assert __version__ in result.output
 
     def test_analyze_help(self):
         """Test analyze command help."""
@@ -233,12 +235,11 @@ class TestMainFunction:
 
     def test_main_no_args(self):
         """Test main() with no arguments."""
-        with patch("sys.argv", ["d4-diag"]):
-            with patch("d4_diag.main.click.echo") as mock_echo:
-                with patch("sys.exit") as mock_exit:
-                    main()
-                    mock_echo.assert_called_with("Use 'd4-diag --help' for usage information.")
-                    mock_exit.assert_called_with(EXIT_SUCCESS)
+        with patch("d4_diag.main.click.echo") as mock_echo:
+            with pytest.raises(SystemExit) as exc:
+                main(["d4-diag"])
+            assert exc.value.code == EXIT_SUCCESS
+            mock_echo.assert_called_with("Use 'd4-diag --help' for usage information.")
 
     def test_main_help_arg(self):
         """Test main() with --help argument."""

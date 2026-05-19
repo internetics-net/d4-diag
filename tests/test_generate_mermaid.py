@@ -168,6 +168,32 @@ from .local_module import local_function
         for expected in expected_imports:
             assert expected in imports
 
+    def test_relative_import_from_dot(self, temp_project_dir):
+        """from . import sibling should resolve when sibling module exists."""
+        pkg = temp_project_dir / "pkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("")
+        (pkg / "a.py").write_text("from . import b\n")
+        (pkg / "b.py").write_text("def fn(): pass\n")
+
+        analyzer = CodeMapAnalyzer(str(temp_project_dir))
+        files = [str(pkg / "a.py"), str(pkg / "b.py")]
+        analyzer.build_module_map(files)
+        analyzer.analyze_file(files[0])
+
+        assert ("pkg/a.py", "pkg/b.py") in analyzer.import_edges
+
+    def test_class_diagram_skips_external_bases(self, temp_project_dir):
+        test_file = temp_project_dir / "models.py"
+        test_file.write_text("class User(object):\n    pass\n")
+
+        analyzer = CodeMapAnalyzer(str(temp_project_dir))
+        analyzer.build_module_map([str(test_file)])
+        analyzer.analyze_file(str(test_file))
+
+        content = analyzer.generate_class_diagram()
+        assert "<|--" not in content
+
     def test_resolve_import_local(self, temp_project_dir):
         # Test local import resolution
         main_file = temp_project_dir / "main.py"

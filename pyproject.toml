@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "d4-diag"
-version = "0.1.4"
+version = "0.1.5"
 description = "Python code visualization tool that generates interactive Mermaid diagrams from static analysis"
 authors = ["Pedja Blagojevic <pb@internetics.net>"]
 readme = "README.md"
@@ -8,8 +8,6 @@ packages = [{include = "d4_diag", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-
-[tool.poetry.group.cli.dependencies]
 click = "^8.0.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -23,8 +21,8 @@ pre-commit = "^3.5.0"
 [tool.poetry.scripts]
 main = "d4_diag.main:main"
 d4-diag = "d4_diag.main:main"
-viewer = "d4_diag.viewer_mermaid:main"
-tests = "tests.run_tests:main"
+view = "d4_diag.viewer_mermaid:main"
+test = "tests.run_tests:main"
 
 [tool.black]
 line-length = 100

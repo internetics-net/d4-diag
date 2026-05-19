@@ -92,17 +92,33 @@ classDiagram
             html_path = f.name
 
         try:
-            # Pass a dictionary instead of a string
             diagrams = {"test": mermaid_code}
             generate_html_viewer(diagrams, html_path)
 
-            # Check that file was created and contains expected content
             with open(html_path, "r", encoding="utf-8") as f:
                 html_content = f.read()
 
             assert "<!DOCTYPE html>" in html_content
             assert "mermaid" in html_content.lower()
             assert "graph LR" in html_content
+            assert "securityLevel: 'strict'" in html_content
+        finally:
+            Path(html_path).unlink(missing_ok=True)
+
+    def test_generate_html_viewer_escapes_unsafe_names(self):
+        """Diagram titles must not inject HTML or script."""
+        mermaid_code = "```mermaid\ngraph LR\nA-->B\n```"
+        unsafe = '<script>alert("x")</script>'
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False) as f:
+            html_path = f.name
+
+        try:
+            generate_html_viewer({unsafe: mermaid_code}, html_path, project_name=unsafe)
+            html_content = Path(html_path).read_text(encoding="utf-8")
+            assert "<script>alert" not in html_content
+            assert "data-diagram-id=" in html_content
+            assert 'onclick="showDiagram' not in html_content
         finally:
             Path(html_path).unlink(missing_ok=True)
 

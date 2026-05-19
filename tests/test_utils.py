@@ -3,7 +3,7 @@
 import ast
 from pathlib import Path
 
-from d4_diag.utils import EXCLUDED_DIRS, find_python_files, get_base_name, qlabel, sanitize_id
+from d4_diag.utils import EXCLUDED_DIRS, _is_excluded_dir, find_python_files, get_base_name, qlabel, sanitize_id
 
 
 class TestSanitizeId:
@@ -174,6 +174,19 @@ class TestFindPythonFiles:
             ".eggs",
         }
         assert expected_dirs.issubset(EXCLUDED_DIRS)
+
+    def test_egg_info_directory_excluded(self, temp_project_dir):
+        egg_dir = temp_project_dir / "my_package.egg-info"
+        egg_dir.mkdir()
+        (egg_dir / "PKG-INFO").write_text("Metadata")
+        (egg_dir / "module.py").write_text("x = 1\n")
+
+        result = find_python_files(str(temp_project_dir))
+        assert not any("egg-info" in f for f in result)
+
+    def test_is_excluded_dir_glob(self):
+        assert _is_excluded_dir("foo.egg-info") is True
+        assert _is_excluded_dir("src") is False
 
     def test_file_with_py_extension_only(self, temp_project_dir):
         # Create a file that ends with .py but isn't valid Python

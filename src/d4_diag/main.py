@@ -2,10 +2,11 @@
 
 import sys
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 import click
 
+from . import __version__
 from .generate_mermaid import CodeMapAnalyzer
 from .utils import find_python_files
 from .viewer_mermaid import view_diagrams
@@ -22,7 +23,7 @@ KNOWN_COMMANDS = {"--help", "-h", "--version", "analyze", "viewer"}
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
-@click.version_option(version="0.1.0", prog_name="d4-diag")
+@click.version_option(version=__version__, prog_name="d4-diag")
 def cli():
     """Analyze Python code and generate dependency diagrams.
 
@@ -48,7 +49,9 @@ def _validate_input_paths(paths: List[Path]) -> None:
         sys.exit(EXIT_USAGE)
 
 
-def _resolve_project_root(project_root: Path | None, paths: List[Path], verbose: bool) -> Path:
+def _resolve_project_root(
+    project_root: Optional[Path], paths: List[Path], verbose: bool
+) -> Path:
     """Resolve and validate project root directory."""
     if project_root:
         if not project_root.exists():
@@ -94,7 +97,7 @@ def _collect_python_files(paths: List[Path], verbose: bool) -> List[str]:
     return all_files
 
 
-def _setup_output_directory(output_dir: Path | None, project_root: Path) -> Path:
+def _setup_output_directory(output_dir: Optional[Path], project_root: Path) -> Path:
     """Setup and validate output directory."""
     if output_dir is None:
         output_dir = project_root / "docs" / "diagrams"
@@ -284,7 +287,7 @@ def _validate_output_directory(output_dir: Path, project_root: Path) -> None:
 
 
 # Maintain backward compatibility - default command is analyze
-def main(argv: List[str] | None = None) -> None:
+def main(argv: Optional[List[str]] = None) -> None:
     """Main entry point for backward compatibility.
 
     Args:

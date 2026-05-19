@@ -1,6 +1,7 @@
 """Common utility functions for d4-diag."""
 
 import ast
+import fnmatch
 import os
 import re
 from pathlib import Path
@@ -70,6 +71,13 @@ EXCLUDED_DIRS = {
 }
 
 
+def _is_excluded_dir(part: str) -> bool:
+    """Return True if a path component should be skipped during discovery."""
+    if part in EXCLUDED_DIRS:
+        return True
+    return any(fnmatch.fnmatch(part, pattern) for pattern in EXCLUDED_DIRS if "*" in pattern)
+
+
 def find_python_files(root_path: str) -> List[str]:
     """Recursively find all Python files in a directory.
 
@@ -86,7 +94,7 @@ def find_python_files(root_path: str) -> List[str]:
     for p in root.rglob("*.py"):
         # Check if any parent directory should be excluded
         parts = p.relative_to(root).parts
-        if any(part in EXCLUDED_DIRS for part in parts):
+        if any(_is_excluded_dir(part) for part in parts):
             continue
         results.append(str(p))
     return results
