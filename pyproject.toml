@@ -1,6 +1,7 @@
 [tool.poetry]
 name = "d4-diag"
 version = "0.1.5"
+# git tag v0.1.5 & git push origin v0.1.5
 description = "Python code visualization tool that generates interactive Mermaid diagrams from static analysis"
 authors = ["Pedja Blagojevic <pb@internetics.net>"]
 readme = "README.md"
