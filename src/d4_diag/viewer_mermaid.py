@@ -23,6 +23,8 @@ def find_diagram_files(diagrams_dir: str) -> List[Path]:
         raise NotADirectoryError(f"'{diagrams_dir}' is not a directory")
 
     for mmd_file in diagrams_path.glob("*.mmd"):
+        if mmd_file.is_symlink():
+            continue
         diagram_files.append(mmd_file)
 
     return sorted(diagram_files)
@@ -30,6 +32,8 @@ def find_diagram_files(diagrams_dir: str) -> List[Path]:
 
 def read_diagram_content(file_path: Path) -> str:
     """Read the content of a diagram file"""
+    if file_path.is_symlink():
+        raise FileNotFoundError(f"Refusing to read symlink diagram: {file_path}")
     try:
         size = file_path.stat().st_size
         if size > MAX_DIAGRAM_FILE_SIZE:
@@ -419,10 +423,15 @@ def generate_html_viewer(
     html_content = html_content.replace("{mermaid_cdn_url}", MERMAID_CDN_URL)
     html_content = html_content.replace("{mermaid_cdn_integrity}", MERMAID_CDN_INTEGRITY)
 
-    with open(output_path, "w", encoding="utf-8") as f:
+    output = Path(output_path)
+    if ".." in output.parts:
+        raise ValueError(f"Refusing path traversal in viewer output path: {output_path}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    return output_path
+    return str(output.resolve())
 
 
 def view_diagrams(diagrams_dir: str, open_browser: bool = True):
@@ -459,7 +468,7 @@ def view_diagrams(diagrams_dir: str, open_browser: bool = True):
 
     if open_browser:
         print("Opening browser...")
-        webbrowser.open(f"file://{html_file}")
+        webbrowser.open(Path(html_file).resolve().as_uri())
     else:
         print("\nTo view diagrams, open this file in your browser:")
         print("  " + html_file)

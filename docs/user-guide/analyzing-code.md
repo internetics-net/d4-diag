@@ -1,84 +1,83 @@
 # Analyzing Code
 
-Learn how to use D4-Diag's analysis capabilities effectively.
+How to run **d4-diag** analysis effectively.
 
-## Command Line Interface
-
-### Basic Syntax
+## CLI syntax
 
 ```bash
-d4-diag analyze <path> [path2 ...]
+d4-diag analyze <path> [path ...] [options]
 ```
 
-Or as a Python module:
+Legacy (implicit `analyze`):
 
 ```bash
-python -m d4_diag analyze <path> [path2 ...]
+d4-diag ./src
 ```
 
-### Arguments
-
-- `<path>` - Python file or directory to analyze
-- Multiple paths can be provided
-
-### Examples
+Module form:
 
 ```bash
-# Single file
+python -m d4_diag analyze ./src
+```
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `-v`, `--verbose` | Show directories scanned and each file processed |
+| `-o`, `--output-dir` | Output directory (default: `{project_root}/docs/diagrams`) |
+| `-r`, `--project-root` | Override auto-detected project root |
+
+## Examples
+
+```bash
 d4-diag analyze app.py
-
-# Single directory
 d4-diag analyze src/
-
-# Multiple paths
 d4-diag analyze src/ tests/ scripts/
-
-# Current directory
-d4-diag analyze .
-
-# With verbose output
-d4-diag analyze src/ --verbose
-
-# Custom output directory
+d4-diag analyze . --verbose
 d4-diag analyze src/ --output-dir ./docs/diagrams
+d4-diag analyze ./packages/foo --project-root ./packages/foo
 ```
 
-## What Gets Analyzed
+## What gets analyzed
 
-D4-Diag performs static analysis using Python's AST (Abstract Syntax Tree):
+Static analysis via Python **AST**:
 
-### Detected Elements
+| Detected | Notes |
+|----------|-------|
+| Classes | Name, methods, base classes |
+| Functions | Top-level definitions |
+| Imports | `import` and `from … import` |
+| Inheritance | Base class names |
 
-- **Classes** - All class definitions with their methods
-- **Functions** - Top-level function definitions
-- **Imports** - Import statements (`import` and `from ... import`)
-- **Inheritance** - Base classes for each class
+Not analyzed: runtime behavior, dynamic imports, decorator bodies, type hints (shown in source only).
 
-### Not Analyzed
+## File discovery
 
-- Runtime behavior
-- Dynamic imports
-- Decorators (shown but not analyzed)
-- Type hints (shown but not analyzed)
+`find_python_files` walks directories with:
 
-## Output Location
+- **Excluded dirs:** `.venv`, `venv`, `__pycache__`, `.git`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `node_modules`, `dist`, `build`, `site-packages`, `*.egg-info`, …
+- **No symlink following** — symlinked directories are not descended; symlinked `.py` files are skipped
+- **Size limit:** files **> 10 MB** are skipped during analysis
 
-Diagrams are generated in:
+## Project root detection
+
+1. First **directory** argument → used as root
+2. Only **files** → parent of the first file
+3. Fallback → current working directory
+
+Use `--project-root` when auto-detection is wrong (monorepos, nested packages).
+
+## Output
+
 ```
-<project_root>/docs/diagrams/
+<output-dir>/
 ├── architecture.mmd
 ├── class_diagram.mmd
 └── module_deps.mmd
 ```
 
-The project root is determined by:
-1. First directory in arguments → use as root
-2. Only files provided → use parent directory of first file
-3. Fallback → current working directory
-
-## Analysis Summary
-
-After analysis, you'll see a summary:
+## Summary output
 
 ```
 === Code Map Summary ===
@@ -86,64 +85,43 @@ Files analyzed:   32
 Classes found:    59
 Functions found:  56
 Import links:     37
-
-Project structure:
-  src/models.py  (16 classes)
-  src/server.py  (3 classes)
-  src/main.py  (5 functions)
-  ...
 ```
 
-## Large Projects
+## Output directory safety
 
-D4-Diag is optimized for large codebases:
+If `--output-dir` resolves outside the project root, d4-diag warns and asks for confirmation before writing.
 
-- **Fast AST parsing** - No code execution required
-- **Deduplication** - Import edges are deduplicated
-- **Lazy rendering** - Viewer only renders visible diagrams
-- **Scrollable output** - Large diagrams are scrollable
+## Large projects
 
-### Performance Tips
+Tips for 100+ files:
 
-For very large projects (100+ files):
-
-1. **Analyze specific subdirectories** instead of entire repo
-2. **Exclude test files** if not needed
-3. **Use module dependencies** to understand high-level structure first
+1. Analyze subdirectories (`src/`, `lib/`) instead of the whole monorepo
+2. Start with **module dependencies** for high-level structure
+3. Use `--verbose` to see which paths are included
 
 ## Troubleshooting
 
-### Syntax Errors
+**No Python files found**
 
-Files with syntax errors are skipped:
+- Path exists and contains `.py` files
+- Files are not only under excluded dirs or symlinks
+- Read permissions are OK
+
+**Syntax error in file**
+
+Analysis continues; the file may be omitted or partial:
+
 ```
-Syntax error in src/broken.py: invalid syntax
+Warning: Failed to analyze src/broken.py: ...
 ```
 
-The analysis continues with remaining files.
+**Import edges missing**
 
-### No Python Files Found
+Only **project-local** imports become edges. Third-party packages are ignored.
 
-```
-No Python files found!
-```
+## Next steps
 
-Check that:
-- Path exists and is correct
-- Directory contains `.py` files
-- You have read permissions
-
-### Import Resolution
-
-D4-Diag resolves imports by:
-1. Building a module map from analyzed files
-2. Matching import statements to project files
-3. External imports (e.g., `numpy`) are ignored
-
-Only **project-local** imports create edges in the module dependency diagram.
-
-## Next Steps
-
-- [Diagram Types](diagram-types.md) - Understand each diagram
-- [Viewing Diagrams](viewing-diagrams.md) - Interactive viewer features
-- [CLI Reference](../reference/cli.md) - Complete command reference
+- [Diagram Types](diagram-types.md)
+- [Viewing Diagrams](viewing-diagrams.md)
+- [CLI Reference](../reference/cli.md)
+- [Security](../SECURITY.md)

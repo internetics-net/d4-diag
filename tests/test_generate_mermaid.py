@@ -86,6 +86,21 @@ class TestCodeMapAnalyzer:
         assert "sample_function" in functions
         assert "async_function" in functions
 
+    def test_analyze_file_skips_symlink(self, temp_project_dir):
+        real = temp_project_dir / "real.py"
+        real.write_text("def fn(): pass\n")
+        link = temp_project_dir / "link.py"
+        link.symlink_to(real)
+
+        analyzer = CodeMapAnalyzer(str(temp_project_dir))
+        try:
+            with patch("builtins.print") as mock_print:
+                analyzer.analyze_file(str(link))
+                assert any("Skipping symlink" in str(call) for call in mock_print.call_args_list)
+            assert not analyzer.files
+        finally:
+            link.unlink(missing_ok=True)
+
     def test_analyze_file_with_syntax_error(self, temp_project_dir):
         # Create a file with syntax error
         invalid_file = temp_project_dir / "invalid.py"

@@ -1,6 +1,6 @@
 # Diagram Types
 
-D4-Diag generates three complementary diagrams to help you understand your codebase.
+**d4-diag** v0.1.5 generates three complementary Mermaid diagrams in the output directory (default: `docs/diagrams/`).
 
 ## Architecture Overview
 
@@ -148,4 +148,5 @@ All diagrams use Mermaid syntax and can be:
 ## Next Steps
 
 - [Viewing Diagrams](viewing-diagrams.md) - Interactive viewer features
+- [Security](../SECURITY.md) - Viewer hardening
 - [Examples](../examples.md) - Real-world diagram examples

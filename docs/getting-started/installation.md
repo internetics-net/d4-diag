@@ -2,19 +2,19 @@
 
 ## Prerequisites
 
-- Python 3.8 or higher
-- pip (comes with Python)
+- Python **3.8.1** or higher
+- `pip` (included with Python)
 
-## Install
+## Install from PyPI
 
 ```bash
 pip install d4-diag
 ```
 
-## Verify
+Verify:
 
 ```bash
-d4-diag --version
+d4-diag --version   # 0.1.5
 d4-diag --help
 ```
 
@@ -30,49 +30,60 @@ pip install --upgrade d4-diag
 pip uninstall d4-diag
 ```
 
-## Isolated Install (recommended)
+## Isolated install (recommended)
 
-Use `pipx` to install d4-diag in an isolated environment so it doesn't interfere with other packages:
+Use [pipx](https://pypa.github.io/pipx/) so d4-diag does not mix with project dependencies:
 
 ```bash
 pip install pipx
 pipx install d4-diag
 ```
 
-## Virtual Environment
+## Development install
 
-If you prefer a project-level virtual environment:
+Clone and use Poetry:
 
 ```bash
-# Create and activate
-python -m venv venv
+git clone https://github.com/internetics-net/d4-diag.git
+cd d4-diag
+poetry install
+poetry run d4-diag --version
+poetry run pytest tests -v
+```
+
+Poetry registers console scripts: `d4-diag`, `main`, `view`, `test`.
+
+## Virtual environment
+
+```bash
+python -m venv .venv
 
 # Windows
-venv\Scripts\activate
+.venv\Scripts\activate
 
 # macOS/Linux
-source venv/bin/activate
+source .venv/bin/activate
 
-# Install
 pip install d4-diag
 ```
 
 ## Troubleshooting
 
-**`d4-diag: command not found` after install**
+**`d4-diag: command not found`**
 
-Your Python scripts directory may not be on your PATH. Try running as a module instead:
+Run as a module:
 
 ```bash
 python -m d4_diag --help
+python -m d4_diag analyze ./src
 ```
 
-Or add the scripts directory to PATH:
+Or add the scripts directory to `PATH`:
 
-- **Windows**: Add `%APPDATA%\Python\PythonXX\Scripts` to your PATH
-- **macOS/Linux**: Add `~/.local/bin` to your PATH
+- **Windows:** `%APPDATA%\Python\PythonXX\Scripts`
+- **macOS/Linux:** `~/.local/bin`
 
-## Next Steps
+## Next steps
 
-- [Quick Start Guide](quick-start.md) - Run your first analysis
-- [Analyzing Code](../user-guide/analyzing-code.md) - Detailed analysis options
+- [Quick Start](quick-start.md)
+- [CLI Reference](../reference/cli.md)

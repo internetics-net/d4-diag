@@ -1,6 +1,6 @@
 # Code Quality
 
-D4-Diag uses several tools to maintain code quality and consistency.
+**d4-diag** uses Black, Flake8, and pre-commit (see `pyproject.toml`, `.flake8`, `.pre-commit-config.yaml`).
 
 ## Tools
 

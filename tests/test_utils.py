@@ -3,12 +3,16 @@
 import ast
 from pathlib import Path
 
+import pytest
+
 from d4_diag.utils import (
     EXCLUDED_DIRS,
     _is_excluded_dir,
     find_python_files,
     get_base_name,
+    is_within_directory,
     qlabel,
+    safe_join_directory,
     sanitize_id,
 )
 
@@ -221,3 +225,42 @@ class TestFindPythonFiles:
             link_dir.unlink(missing_ok=True)
             outside_file.unlink(missing_ok=True)
             outside_dir.rmdir()
+
+    def test_skips_symlink_root_directory(self, temp_project_dir):
+        """A scan root that is itself a symlink must not be followed."""
+        outside_dir = temp_project_dir.parent / "outside_root"
+        outside_dir.mkdir(exist_ok=True)
+        (outside_dir / "leak.py").write_text("x = 1\n")
+
+        link_root = temp_project_dir / "linked_root"
+        link_root.symlink_to(outside_dir, target_is_directory=True)
+
+        try:
+            assert find_python_files(str(link_root)) == []
+        finally:
+            link_root.unlink(missing_ok=True)
+            (outside_dir / "leak.py").unlink(missing_ok=True)
+            outside_dir.rmdir()
+
+
+class TestPathSafety:
+    """Test path traversal guards."""
+
+    def test_is_within_directory(self, temp_project_dir):
+        child = temp_project_dir / "docs" / "diagrams"
+        child.mkdir(parents=True)
+        assert is_within_directory(child, temp_project_dir) is True
+        assert is_within_directory(Path("/etc"), temp_project_dir) is False
+
+    def test_safe_join_directory(self, temp_project_dir):
+        out = temp_project_dir / "docs"
+        out.mkdir()
+        path = safe_join_directory(out, "architecture.mmd")
+        assert path.name == "architecture.mmd"
+        assert is_within_directory(path, out)
+
+    def test_safe_join_rejects_traversal(self, temp_project_dir):
+        out = temp_project_dir / "docs"
+        out.mkdir()
+        with pytest.raises(ValueError):
+            safe_join_directory(out, "../escape.mmd")

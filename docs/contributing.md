@@ -1,214 +1,90 @@
 # Contributing
 
-Thank you for considering contributing to D4-Diag!
+Thank you for contributing to **d4-diag**.
 
-## Getting Started
-
-### Fork and Clone
+## Setup
 
 ```bash
-# Fork on GitHub, then clone your fork
 git clone https://github.com/internetics-net/d4-diag.git
 cd d4-diag
-
-# Add upstream remote
-git remote add upstream https://github.com/internetics-net/d4-diag.git
-```
-
-### Development Setup
-
-```bash
-# Install dependencies
 poetry install
-
-# Run tests
-poetry run pytest
-
-# Analyze d4-diag itself
-poetry run main .
-poetry run viewer docs/diagrams
+poetry run pre-commit install   # optional but recommended
 ```
 
-## Development Workflow
-
-### 1. Create a Branch
+## Workflow
 
 ```bash
-git checkout -b feature/your-feature-name
+git checkout -b feature/my-change
+
+# format & lint
+poetry run black src tests
+poetry run flake8 src tests
+
+# test
+poetry run pytest tests -v
+
+# dogfood
+poetry run d4-diag analyze src/
+poetry run d4-diag viewer docs/diagrams --no-browser
 ```
 
-### 2. Make Changes
+Submit a pull request from your fork.
 
-Follow these guidelines:
-- Write clear, descriptive commit messages
-- Add tests for new features
-- Update documentation
-- Follow existing code style
-
-### 3. Test Your Changes
+## Tests
 
 ```bash
-# Run tests
-poetry run pytest
-
-# Test on real projects
-poetry run main /path/to/test/project
-poetry run viewer /path/to/test/project/docs/diagrams
+poetry run pytest                  # all tests
+poetry run pytest tests/test_viewer_mermaid.py -v
+poetry run pytest --cov=d4_diag    # with coverage
+poetry run test                    # alternate entry point
 ```
 
-### 4. Submit Pull Request
+Test modules:
 
-```bash
-# Push to your fork
-git push origin feature/your-feature-name
-
-# Create PR on GitHub
-```
-
-## Code Style
-
-### Python
-
-- Follow PEP 8
-- Use type hints where helpful
-- Keep functions focused and small
-- Add docstrings for public APIs
-
-### Example
-
-```python
-def sanitize_id(name: str) -> str:
-    """Sanitize a string for use as a Mermaid node ID.
-
-    Args:
-        name: Raw string to sanitize
-
-    Returns:
-        Sanitized ID safe for Mermaid
-    """
-    s = re.sub(r'[^\w]', '_', name)
-    if s and s[0].isdigit():
-        s = 'n' + s
-    return 'id_' + s
-```
-
-## Testing
-
-### Running Tests
-
-```bash
-# All tests
-poetry run pytest
-
-# Specific test file
-poetry run pytest tests/test_analyzer.py
-
-# With coverage
-poetry run pytest --cov=d4_diag
-```
-
-### Writing Tests
-
-Add tests in `tests/` directory:
-
-```python
-def test_sanitize_id():
-    assert sanitize_id("models.py") == "id_models_py"
-    assert sanitize_id("123test") == "id_n123test"
-```
+| File | Focus |
+|------|--------|
+| `test_cli_basic.py`, `test_main.py` | CLI and analyze flow |
+| `test_generate_mermaid.py` | Analyzer and diagrams |
+| `test_viewer_mermaid.py` | HTML viewer, escaping |
+| `test_utils.py` | File discovery, symlinks |
+| `test_integration.py` | End-to-end |
 
 ## Documentation
 
-### Building Docs Locally
-
 ```bash
-# Install docs dependencies
-poetry install
-
-# Serve docs locally
-poetry run mkdocs serve
-
-# Build docs
-poetry run mkdocs build
+poetry run mkdocs serve    # http://127.0.0.1:8000
+poetry run mkdocs build --strict
 ```
 
-### Writing Docs
+Update `mkdocs.yml` nav when adding pages. Keep `README.md` and `docs/` in sync.
 
-- Use clear, concise language
-- Include code examples
-- Add screenshots where helpful
-- Update navigation in `mkdocs.yml`
+## Code style
 
-## Areas for Contribution
+- PEP 8, Black (line length 100)
+- Flake8 via `.flake8` and pre-commit
+- Type hints where helpful
+- Docstrings on public APIs
 
-### High Priority
+See [Code Quality](contributing/code-quality.md).
 
-- [ ] Add support for more diagram types
-- [ ] Improve import resolution for complex projects
-- [ ] Add filtering options (exclude patterns, etc.)
-- [ ] Performance optimization for very large projects
+## Security changes
 
-### Medium Priority
+If you touch file discovery, diagram parsing, or the HTML viewer:
 
-- [ ] Add configuration file support
-- [ ] Export diagrams to PNG/SVG
-- [ ] Interactive diagram editing
-- [ ] Plugin system for custom analyzers
+- Add or extend tests in `tests/test_utils.py` / `tests/test_viewer_mermaid.py`
+- Document behavior in [SECURITY.md](SECURITY.md)
 
-### Low Priority
+## Reporting issues
 
-- [ ] Support for other languages (JavaScript, TypeScript)
-- [ ] Integration with IDEs
-- [ ] Diagram diff tool
-- [ ] Web-based diagram editor
+Include Python version, d4-diag version (`d4-diag --version`), minimal repro steps, and expected vs actual behavior.
 
-## Reporting Issues
+## Release (maintainers)
 
-### Bug Reports
-
-Include:
-- Python version
-- D4-Diag version
-- Steps to reproduce
-- Expected vs actual behavior
-- Sample code if possible
-
-### Feature Requests
-
-Include:
-- Use case description
-- Proposed solution
-- Alternative approaches considered
-- Willingness to implement
-
-## Code Review Process
-
-1. Maintainer reviews PR
-2. Feedback provided via comments
-3. Author addresses feedback
-4. Maintainer approves and merges
-
-## Release Process
-
-Maintainers handle releases:
-
-1. Update version in `pyproject.toml`
-2. Update CHANGELOG.md
-3. Create GitHub release
-4. Publish to PyPI (future)
-
-## Community
-
-- **GitHub Discussions** - Ask questions, share ideas
-- **Issues** - Bug reports and feature requests
-- **Pull Requests** - Code contributions
+1. Bump `version` in `pyproject.toml`
+2. Update changelog if maintained
+3. Tag `vX.Y.Z` and push
+4. Publish to PyPI when configured
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the same license as the project.
-
-## Questions?
-
-Open a GitHub Discussion or reach out to maintainers.
-
-Thank you for contributing! 🎉
+Contributions are licensed under the project MIT license.

@@ -1,66 +1,67 @@
 # D4-Diag
 
-**D4-Diag** is a Python code analysis and visualization tool that generates interactive Mermaid diagrams to help you understand your codebase structure.
+**D4-Diag** analyzes Python codebases and generates interactive **Mermaid** diagrams for architecture, classes, and module dependencies.
+
+**Version:** `0.1.5`
 
 ## Features
 
-- 🏗️ **Architecture Overview** - Visualize your project structure with files as containers showing classes and functions
-- 📊 **Class Diagrams** - See all classes with their methods and inheritance relationships
-- 🔗 **Module Dependencies** - Understand import relationships between your Python modules
-- 🎨 **Interactive Viewer** - Browse all diagrams in a beautiful web interface
-- ⚡ **Fast Analysis** - Quickly analyze entire projects or individual files
+- **Architecture overview** — files as containers with classes, functions, and cross-file imports
+- **Class diagram** — UML-style classes, methods, and inheritance
+- **Module dependencies** — project-local import graph
+- **Interactive viewer** — tabbed HTML UI with lazy rendering and hardened Mermaid config
+- **Fast static analysis** — AST parsing only; no code execution
 
-## Quick Example
+## Quick example
 
 ```bash
-# Analyze a project
-poetry run main /path/to/your/project
+# PyPI install
+pip install d4-diag
+d4-diag analyze /path/to/your/project
+d4-diag viewer /path/to/your/project/docs/diagrams
 
-# View the generated diagrams
-poetry run viewer /path/to/your/project/docs/diagrams
+# Dev checkout
+poetry install
+poetry run d4-diag analyze src/
+poetry run d4-diag viewer docs/diagrams
 ```
 
-## What You Get
+Legacy form (implicit `analyze`):
 
-### Architecture Diagram
-Shows your project's file structure with each file as a subgraph containing its classes and functions. Import relationships are shown as arrows between files.
+```bash
+d4-diag ./src
+```
 
-### Class Diagram
-A proper UML-style class diagram showing all classes, their methods, and inheritance relationships using Mermaid's `classDiagram` syntax.
+## What you get
 
-### Module Dependencies
-A clean dependency graph showing which modules import from which, helping you understand coupling and module organization.
+### Architecture diagram
+
+Each Python file is a subgraph containing its classes and top-level functions. Arrows show imports between project files.
+
+### Class diagram
+
+Mermaid `classDiagram` with methods and inheritance (`User <|-- Admin`).
+
+### Module dependencies
+
+Minimal graph of which modules import which (external packages like `numpy` are excluded).
 
 ## Installation
 
-Get started with D4-Diag in seconds:
-
-```bash
-# Clone the repository
-git clone https://github.com/internetics-net/d4-diag.git
-cd d4-diag
-
-# Install with Poetry
-poetry install
-
-# Run analysis
-poetry run main .
-```
-
-See the [Installation Guide](getting-started/installation.md) for more details.
+See the [Installation Guide](getting-started/installation.md).
 
 ## Why D4-Diag?
 
-Traditional code analysis tools often produce overwhelming output or require complex setup. D4-Diag focuses on:
+- **One command** to visualize structure
+- **Clear diagrams** focused on navigation and onboarding
+- **Safe defaults** — symlink skipping, size limits, escaped HTML viewer, strict Mermaid security level
+- **Library-friendly** — use `CodeMapAnalyzer` from Python or the CLI
 
-- **Simplicity** - Single command to analyze and visualize
-- **Clarity** - Clean, focused diagrams that show what matters
-- **Speed** - Fast AST-based analysis
-- **Interactivity** - Beautiful web viewer with lazy rendering for large projects
+## Next steps
 
-## Next Steps
-
-- [Quick Start Guide](getting-started/quick-start.md) - Get up and running in 5 minutes
-- [Analyzing Code](user-guide/analyzing-code.md) - Learn all analysis options
-- [Diagram Types](user-guide/diagram-types.md) - Understand each diagram type
-- [Examples](examples.md) - See real-world usage examples
+- [Quick Start](getting-started/quick-start.md) — first analysis in 5 minutes
+- [Analyzing Code](user-guide/analyzing-code.md) — CLI options and behavior
+- [Diagram Types](user-guide/diagram-types.md) — when to use each diagram
+- [Viewing Diagrams](user-guide/viewing-diagrams.md) — viewer features
+- [Security](SECURITY.md) — hardening details
+- [Examples](examples.md) — real-world patterns

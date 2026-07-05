@@ -1,155 +1,166 @@
 # CLI Reference
 
-Complete command-line interface reference for D4-Diag.
+Complete command-line reference for **d4-diag** v0.1.5.
 
-## Main Command
+## Global
 
-Analyze Python code and generate diagrams.
+```bash
+d4-diag --help
+d4-diag --version
+d4-diag -h
+```
+
+| Exit code | Meaning |
+|-----------|---------|
+| `0` | Success |
+| `1` | Runtime error (missing paths, analysis failure, viewer error) |
+| `2` | Usage error (e.g. no paths for `analyze`) |
+
+## `analyze`
+
+Analyze Python files and generate Mermaid diagrams.
 
 ### Syntax
 
 ```bash
-poetry run main <path> [path2 ...]
+d4-diag analyze <path> [path ...] [options]
 ```
 
 ### Arguments
 
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `<path>` | string | Yes | Python file or directory to analyze |
-| `[path2 ...]` | string | No | Additional paths to analyze |
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `path` | Yes (one or more) | `.py` file or directory to scan |
+
+### Options
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--output-dir` | `-o` | `{project_root}/docs/diagrams` | Where to write `.mmd` files |
+| `--project-root` | `-r` | Auto-detected | Root for relative paths and module resolution |
+| `--verbose` | `-v` | off | Print discovery and per-file progress |
 
 ### Examples
 
 ```bash
-# Single file
-poetry run main app.py
+d4-diag analyze ./src
+d4-diag analyze app.py lib/
+d4-diag analyze . --verbose
+d4-diag analyze src/ tests/ --output-dir ./docs/diagrams
+d4-diag analyze ./packages/foo --project-root ./packages/foo
+```
 
-# Single directory
-poetry run main src/
+### Backward compatibility
 
-# Multiple paths
-poetry run main src/ tests/ scripts/
+If the first argument is not a known subcommand (`analyze`, `viewer`, `--help`, `--version`), **`analyze` is inserted automatically**:
 
-# Current directory
-poetry run main .
+```bash
+d4-diag ./src              # same as d4-diag analyze ./src
+d4-diag ./src --verbose
 ```
 
 ### Output
 
-Generates three Mermaid diagram files in `<project_root>/docs/diagrams/`:
-- `architecture.mmd` - Architecture overview
-- `class_diagram.mmd` - Class diagram
-- `module_deps.mmd` - Module dependencies
+Creates (or overwrites) three files in the output directory:
 
-### Exit Codes
+- `architecture.mmd`
+- `class_diagram.mmd`
+- `module_deps.mmd`
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | No arguments provided |
-| 1 | No Python files found |
+Prints a summary (files, classes, functions, import links) to stdout.
 
-## Viewer Command
+### Output directory safety
 
-Launch interactive diagram viewer.
+If `-o` resolves **outside** the project root, the CLI warns and prompts `Continue anyway? [y/N]`. In CI, keep the output path inside the project or use a TTY-aware wrapper.
+
+---
+
+## `viewer`
+
+Open an interactive HTML viewer for generated diagrams.
 
 ### Syntax
 
 ```bash
-poetry run viewer <diagrams_directory>
+d4-diag viewer [diagrams_dir] [options]
 ```
 
 ### Arguments
 
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `<diagrams_directory>` | string | Yes | Directory containing `.mmd` files |
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `diagrams_dir` | `docs/diagrams` | Directory containing `*.mmd` files |
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--no-browser` | Write `_d4_diag_viewer.html` but do not open the browser |
 
 ### Examples
 
 ```bash
-# View diagrams from analyzed project
-poetry run viewer /path/to/project/docs/diagrams
-
-# View diagrams from current directory
-poetry run viewer docs/diagrams
+d4-diag viewer
+d4-diag viewer ./docs/diagrams
+d4-diag viewer /path/to/diagrams --no-browser
 ```
 
 ### Behavior
 
-1. Scans directory for `.mmd` files
-2. Generates temporary HTML file
-3. Opens HTML in default browser
-4. Displays interactive diagram viewer
+1. Finds all `*.mmd` files in the directory (max **10 MB** each).
+2. Writes `<diagrams_dir>/_d4_diag_viewer.html`.
+3. Opens the HTML file in the default browser (unless `--no-browser`).
 
-### Output
+### Sample output
 
 ```
-Scanning for diagrams in: /path/to/diagrams
+Scanning for diagrams in: docs/diagrams
 
 Found 3 diagram file(s):
   - architecture.mmd
   - class_diagram.mmd
   - module_deps.mmd
 
-Generated viewer: /tmp/tmpXXXXXX.html
-Opening in browser...
+Generated viewer: .../docs/diagrams/_d4_diag_viewer.html
+Opening browser...
 ```
 
-### Exit Codes
+---
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | No arguments provided |
-| 1 | Directory not found |
-| 1 | No `.mmd` files found |
+## Run as a module
+
+```bash
+python -m d4_diag analyze ./src
+python -m d4_diag viewer ./docs/diagrams
+python -m d4_diag --help
+```
+
+---
+
+## Poetry script aliases
+
+From a dev checkout (`poetry install`):
+
+| Script | Equivalent |
+|--------|------------|
+| `poetry run d4-diag …` | Full CLI |
+| `poetry run main …` | Same entry point as `d4-diag` |
+| `poetry run view <dir>` | Standalone viewer (`viewer_mermaid.main`) |
+| `poetry run test` | Test runner (`tests.run_tests`) |
+
+---
 
 ## Environment
 
-### Python Version
+- **Python:** 3.8.1+
+- **Runtime dependency:** [Click](https://click.palletsprojects.com/) 8.x
+- **No config file** — behavior is controlled only by CLI flags
 
-Requires Python 3.8 or higher.
+---
 
-### Dependencies
+## Related
 
-Runtime dependencies:
-- Python standard library only
-
-Development dependencies:
-- pytest (testing)
-- mkdocs (documentation)
-- mkdocs-material (documentation theme)
-
-## Configuration
-
-D4-Diag has no configuration files. All behavior is controlled via command-line arguments.
-
-## Programmatic Usage
-
-You can also use D4-Diag as a Python module:
-
-```python
-from d4_diag.main import CodeMapAnalyzer
-
-# Create analyzer
-analyzer = CodeMapAnalyzer(project_root="/path/to/project")
-
-# Build module map
-analyzer.build_module_map(file_paths)
-
-# Analyze files
-for file_path in file_paths:
-    analyzer.analyze_file(file_path)
-
-# Generate diagrams
-analyzer.generate_all(output_dir="docs/diagrams")
-```
-
-See [API Reference](api.md) for details.
-
-## Next Steps
-
-- [API Reference](api.md) - Programmatic usage
-- [Examples](../examples.md) - Real-world usage examples
+- [Analyzing Code](../user-guide/analyzing-code.md)
+- [Viewing Diagrams](../user-guide/viewing-diagrams.md)
+- [API Reference](api.md)
+- [Security](../SECURITY.md)

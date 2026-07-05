@@ -3,9 +3,10 @@
 import ast
 import os
 import re
+from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from .utils import get_base_name, qlabel, sanitize_id
+from .utils import get_base_name, qlabel, safe_join_directory, sanitize_id
 
 
 class CodeMapAnalyzer:
@@ -43,6 +44,11 @@ class CodeMapAnalyzer:
 
     def analyze_file(self, file_path: str):
         """Analyze a single Python file."""
+        file_path_obj = Path(file_path)
+        if file_path_obj.is_symlink():
+            print(f"  Skipping symlink: {file_path}")
+            return
+
         rel = self._rel(file_path)
 
         # Check file size to prevent memory issues
@@ -325,10 +331,11 @@ class CodeMapAnalyzer:
         if save_files:
             if output_dir is None:
                 output_dir = os.path.join(self.project_root, "docs", "diagrams")
-            os.makedirs(output_dir, exist_ok=True)
+            output_base = Path(output_dir).resolve()
+            output_base.mkdir(parents=True, exist_ok=True)
 
             for filename, content in diagrams.items():
-                filepath = os.path.join(output_dir, filename)
+                filepath = safe_join_directory(output_base, filename)
                 with open(filepath, "w", encoding="utf-8") as f:
                     f.write(content)
                 print(f"  {filename} -> {filepath}")
@@ -342,7 +349,12 @@ class CodeMapAnalyzer:
     @staticmethod
     def _write(path: str, lines: List[str]):
         """Write lines to a file."""
-        with open(path, "w", encoding="utf-8") as f:
+        raw = Path(path)
+        if ".." in raw.parts:
+            raise ValueError(f"Refusing path traversal in output path: {path}")
+        target = raw.resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with open(target, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
 
     def print_summary(self):

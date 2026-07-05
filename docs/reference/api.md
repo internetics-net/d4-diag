@@ -1,244 +1,150 @@
 # API Reference
 
-Use D4-Diag programmatically in your Python code.
+Use **d4-diag** programmatically in Python.
+
+## Package exports
+
+```python
+from d4_diag import CodeMapAnalyzer, find_python_files, __version__
+```
+
+Lower-level utilities:
+
+```python
+from d4_diag.utils import sanitize_id, qlabel, get_base_name
+from d4_diag.generate_mermaid import CodeMapAnalyzer
+from d4_diag.viewer_mermaid import view_diagrams, generate_html_viewer
+```
 
 ## CodeMapAnalyzer
 
-Main class for code analysis and diagram generation.
+Main class for AST analysis and diagram generation (`d4_diag.generate_mermaid`).
 
 ### Constructor
 
 ```python
-from d4_diag.main import CodeMapAnalyzer
-
 analyzer = CodeMapAnalyzer(project_root: str)
 ```
 
 **Parameters:**
-- `project_root` (str): Absolute path to project root directory
 
-**Attributes:**
-- `files` (Dict[str, dict]): Per-file analysis data
-- `import_edges` (Set[tuple]): Import relationships between files
-- `project_root` (str): Project root path
+- `project_root` — project root used for relative paths and import resolution
+
+**Attributes (after analysis):**
+
+- `files` — per-file analysis data
+- `import_edges` — set of `(source_rel, target_rel)` tuples
+- `project_root` — root path string
 
 ### Methods
 
-#### build_module_map
+#### `build_module_map(file_paths: List[str]) -> None`
 
-Build mapping from module names to file paths.
+Build module name → file path mapping for resolving imports.
 
-```python
-analyzer.build_module_map(file_paths: List[str])
-```
+#### `analyze_file(file_path: str) -> None`
 
-**Parameters:**
-- `file_paths` (List[str]): List of absolute file paths to analyze
+Parse one Python file (skips files **> 10 MB**). Updates `files`. Syntax errors are printed; not raised.
 
-**Returns:** None
+#### `generate_architecture(output_file: Optional[str] = None) -> str`
 
-**Side effects:** Populates internal `_module_map` for import resolution
+Return architecture diagram content; optionally write to `output_file`.
 
-#### analyze_file
+#### `generate_class_diagram(output_file: Optional[str] = None) -> str`
 
-Analyze a single Python file.
+Return class diagram content; optionally write to file.
 
-```python
-analyzer.analyze_file(file_path: str)
-```
+#### `generate_module_deps(output_file: Optional[str] = None) -> str`
 
-**Parameters:**
-- `file_path` (str): Absolute path to Python file
+Return module dependency diagram; optionally write to file.
 
-**Returns:** None
+#### `generate_all(save_files: bool = False, output_dir: Optional[str] = None) -> Dict[str, str]`
 
-**Side effects:** Updates `files` dict with analysis results
+Generate all three diagrams.
 
-**Raises:**
-- Prints syntax error message if file has invalid Python syntax
+| Parameter | Default | Behavior |
+|-----------|---------|----------|
+| `save_files` | `False` | When `True`, write `.mmd` files |
+| `output_dir` | `{project_root}/docs/diagrams` | Target directory when saving |
 
-#### generate_architecture
+**Returns:** `{'architecture.mmd': str, 'class_diagram.mmd': str, 'module_deps.mmd': str}`
 
-Generate architecture overview diagram.
+#### `print_summary() -> None`
 
-```python
-analyzer.generate_architecture(output_file: str)
-```
+Print file/class/function/import counts to stdout.
 
-**Parameters:**
-- `output_file` (str): Path where diagram will be saved
+---
 
-**Returns:** None
+## Utility functions
 
-**Side effects:** Writes Mermaid diagram to file
+### `find_python_files(root_path: str) -> List[str]`
 
-#### generate_class_diagram
-
-Generate UML class diagram.
+Recursively collect `.py` files; excludes venvs, caches, build dirs, and **symlinks**.
 
 ```python
-analyzer.generate_class_diagram(output_file: str)
+files = find_python_files("/path/to/project")
 ```
 
-**Parameters:**
-- `output_file` (str): Path where diagram will be saved
+### `sanitize_id(name: str) -> str`
 
-**Returns:** None
+Sanitize a string for Mermaid node/subgraph IDs.
 
-**Side effects:** Writes Mermaid diagram to file
-
-#### generate_module_deps
-
-Generate module dependency diagram.
-
-```python
-analyzer.generate_module_deps(output_file: str)
-```
-
-**Parameters:**
-- `output_file` (str): Path where diagram will be saved
-
-**Returns:** None
-
-**Side effects:** Writes Mermaid diagram to file
-
-#### generate_all
-
-Generate all three diagram types.
-
-```python
-analyzer.generate_all(output_dir: str)
-```
-
-**Parameters:**
-- `output_dir` (str): Directory where diagrams will be saved
-
-**Returns:** None
-
-**Side effects:**
-- Creates output directory if it doesn't exist
-- Writes three `.mmd` files to output directory
-
-#### print_summary
-
-Print analysis summary to stdout.
-
-```python
-analyzer.print_summary()
-```
-
-**Returns:** None
-
-**Side effects:** Prints formatted summary to stdout
-
-## Utility Functions
-
-### sanitize_id
-
-Sanitize a string for use as a Mermaid node ID.
-
-```python
-from d4_diag.main import sanitize_id
-
-node_id = sanitize_id(name: str) -> str
-```
-
-**Parameters:**
-- `name` (str): Raw string to sanitize
-
-**Returns:** str - Sanitized ID safe for Mermaid
-
-**Example:**
-```python
-sanitize_id("models.py")  # Returns: "id_models_py"
-sanitize_id("User")       # Returns: "id_User"
-```
-
-### qlabel
+### `qlabel(text: str) -> str`
 
 Quote a label for safe Mermaid rendering.
 
-```python
-from d4_diag.main import qlabel
+### `view_diagrams(diagrams_dir: str, open_browser: bool = True) -> None`
 
-label = qlabel(text: str) -> str
-```
+Load `.mmd` files, emit `_d4_diag_viewer.html`, optionally open the browser.
 
-**Parameters:**
-- `text` (str): Text to quote
+---
 
-**Returns:** str - Quoted text safe for Mermaid labels
-
-**Example:**
-```python
-qlabel("User (3 methods)")  # Returns: '"User (3 methods)"'
-```
-
-## Complete Example
+## Complete example
 
 ```python
-import os
 from pathlib import Path
-from d4_diag.main import CodeMapAnalyzer, find_python_files
+from d4_diag import CodeMapAnalyzer, find_python_files
 
-# Setup
 project_root = "/path/to/project"
-output_dir = os.path.join(project_root, "docs", "diagrams")
+output_dir = Path(project_root) / "docs" / "diagrams"
 
-# Find all Python files
-file_paths = find_python_files(project_root)
-print(f"Found {len(file_paths)} Python files")
+files = find_python_files(project_root)
+print(f"Found {len(files)} Python files")
 
-# Create analyzer
 analyzer = CodeMapAnalyzer(project_root)
+analyzer.build_module_map(files)
 
-# Build module map for import resolution
-analyzer.build_module_map(file_paths)
-
-# Analyze all files
-for file_path in file_paths:
+for file_path in files:
     analyzer.analyze_file(file_path)
 
-# Print summary
 analyzer.print_summary()
 
-# Generate diagrams
-analyzer.generate_all(output_dir)
-
-print(f"Diagrams saved to {output_dir}")
+diagrams = analyzer.generate_all(save_files=True, output_dir=str(output_dir))
+print(f"Wrote {len(diagrams)} diagrams to {output_dir}")
 ```
 
-## Data Structures
+## Data structures
 
-### File Info
-
-Each entry in `analyzer.files` has this structure:
+### Per-file entry (`analyzer.files[rel_path]`)
 
 ```python
 {
-    'classes': [
-        {
-            'name': str,           # Class name
-            'methods': [str],      # List of method names
-            'bases': [str]         # List of base class names
-        }
+    "classes": [
+        {"name": str, "methods": [str], "bases": [str]}
     ],
-    'functions': [str],            # List of function names
-    'imports': [str]               # List of imported modules
+    "functions": [str],
+    "imports": [str],
 }
 ```
 
-### Import Edge
-
-Each entry in `analyzer.import_edges` is a tuple:
+### Import edge
 
 ```python
-(source_rel: str, target_rel: str)
+(source_rel: str, target_rel: str)  # paths relative to project_root
 ```
 
-Where paths are relative to `project_root`.
+## Related
 
-## Next Steps
-
-- [CLI Reference](cli.md) - Command-line usage
-- [Examples](../examples.md) - Real-world examples
+- [Programmatic Usage](../user-guide/programmatic-usage.md) — CI, Flask, batch examples
+- [CLI Reference](cli.md)
+- [Examples](../examples.md)

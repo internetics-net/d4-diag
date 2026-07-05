@@ -1,184 +1,81 @@
 # Examples
 
-Real-world usage examples for D4-Diag.
+Real-world usage patterns for **d4-diag**.
 
-## Example 1: Analyzing a Flask Application
+## Analyze a Flask or Django app
 
 ```bash
-# Clone a sample Flask app
-git clone https://github.com/example/flask-app.git
-cd flask-app
-
-# Analyze the application
-poetry run main app/
-
-# View diagrams
-poetry run viewer app/docs/diagrams
+cd my-web-app
+d4-diag analyze app/
+d4-diag viewer docs/diagrams
 ```
 
-**What you'll see:**
-- Architecture showing routes, models, and utilities
-- Class diagram with SQLAlchemy models
-- Module dependencies showing app structure
-
-## Example 2: Understanding a Django Project
+For Django, point at app packages:
 
 ```bash
-# Navigate to Django project
-cd my-django-project
-
-# Analyze specific apps
-poetry run main myapp/ accounts/ api/
-
-# View diagrams
-poetry run viewer docs/diagrams
+d4-diag analyze myapp/ accounts/ api/
 ```
 
-**Insights:**
-- See which apps import from which
-- Understand model inheritance
-- Identify circular dependencies
-
-## Example 3: Documenting a Library
+## Document a library
 
 ```bash
-# Analyze your library
 cd my-library
-poetry run main src/
-
-# Commit diagrams to repo
+d4-diag analyze src/
 git add docs/diagrams/*.mmd
 git commit -m "Add architecture diagrams"
 ```
 
-**Benefits:**
-- Auto-generated documentation
-- Visual API overview
-- Easier onboarding
+Embed Mermaid in README or publish via MkDocs.
 
-## Example 4: Code Review
-
-Before reviewing a pull request:
+## Monorepo / custom root
 
 ```bash
-# Checkout PR branch
-git checkout pr-123
-
-# Analyze changed modules
-poetry run main src/models/ src/services/
-
-# Compare with main branch
-git checkout main
-poetry run main src/models/ src/services/
-
-# View both sets of diagrams
+d4-diag analyze ./packages/core/src --project-root ./packages/core
+d4-diag viewer ./packages/core/docs/diagrams
 ```
 
-**Use cases:**
-- Verify architectural changes
-- Spot unintended dependencies
-- Review class design
-
-## Example 5: Refactoring Planning
+## Compare before/after refactor
 
 ```bash
-# Analyze current state
-poetry run main src/
+d4-diag analyze src/
 cp -r docs/diagrams docs/diagrams-before
 
-# After refactoring
-poetry run main src/
-cp -r docs/diagrams docs/diagrams-after
+# … refactor …
 
-# Compare
-diff docs/diagrams-before/ docs/diagrams-after/
+d4-diag analyze src/
+diff -ru docs/diagrams-before docs/diagrams
 ```
 
-**Helps with:**
-- Visualizing impact of changes
-- Ensuring dependencies are simplified
-- Documenting refactoring decisions
-
-## Example 6: Microservices Architecture
+## Multiple services
 
 ```bash
-# Analyze each service
-for service in service-a service-b service-c; do
-    poetry run main $service/
-    mv $service/docs/diagrams docs/$service-diagrams
+for svc in service-a service-b; do
+  d4-diag analyze "$svc/src" --output-dir "docs/diagrams/$svc"
 done
-
-# View all services
-poetry run viewer docs/service-a-diagrams
-poetry run viewer docs/service-b-diagrams
-poetry run viewer docs/service-c-diagrams
+d4-diag viewer docs/diagrams/service-a
 ```
 
-**Insights:**
-- Compare service complexity
-- Identify shared patterns
-- Plan service boundaries
-
-## Example 7: Test Coverage Visualization
-
-```bash
-# Analyze source code
-poetry run main src/
-mv docs/diagrams docs/src-diagrams
-
-# Analyze tests
-poetry run main tests/
-mv docs/diagrams docs/test-diagrams
-
-# Compare to see what's tested
-```
-
-**Reveals:**
-- Which classes have test coverage
-- Test organization
-- Missing test files
-
-## Example 8: Programmatic Usage
+## Programmatic batch
 
 ```python
-#!/usr/bin/env python3
-"""Generate diagrams for multiple projects"""
-
+from d4_diag import CodeMapAnalyzer, find_python_files
 from pathlib import Path
-from d4_diag.main import CodeMapAnalyzer, find_python_files
 
-projects = [
-    "/path/to/project-a",
-    "/path/to/project-b",
-    "/path/to/project-c"
-]
-
-for project_root in projects:
-    print(f"\nAnalyzing {project_root}...")
-
-    # Find files
-    files = find_python_files(project_root)
-
-    # Analyze
-    analyzer = CodeMapAnalyzer(project_root)
+for project in ["/path/a", "/path/b"]:
+    files = find_python_files(project)
+    analyzer = CodeMapAnalyzer(project)
     analyzer.build_module_map(files)
-
     for f in files:
         analyzer.analyze_file(f)
-
-    # Generate
-    output = Path(project_root) / "docs" / "diagrams"
-    analyzer.generate_all(str(output))
-
-    print(f"  Generated diagrams in {output}")
+    out = Path(project) / "docs" / "diagrams"
+    analyzer.generate_all(save_files=True, output_dir=str(out))
+    print(f"{project} → {out}")
 ```
 
-## Example 9: CI/CD Integration
-
-Add to `.github/workflows/diagrams.yml`:
+## GitHub Actions (sketch)
 
 ```yaml
-name: Generate Diagrams
+name: Diagrams
 
 on:
   push:
@@ -188,65 +85,45 @@ jobs:
   diagrams:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
-      - name: Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-
-      - name: Install D4-Diag
-        run: |
-          git clone https://github.com/internetics-net/d4-diag.git
-          cd d4-diag
-          poetry install
-
-      - name: Generate Diagrams
-        run: |
-          cd d4-diag
-          poetry run main ../src
-
-      - name: Commit Diagrams
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add docs/diagrams/*.mmd
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update diagrams"
-          git push
+          python-version: "3.11"
+      - run: pip install d4-diag
+      - run: d4-diag analyze src/ --output-dir docs/diagrams
+      - run: d4-diag viewer docs/diagrams --no-browser
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Update architecture diagrams
+          file_pattern: docs/diagrams/*.mmd
 ```
 
-## Example 10: Embedding in README
+## Dev checkout (this repo)
 
-After generating diagrams, embed them in your README:
+```bash
+poetry install
+poetry run d4-diag analyze src/
+poetry run d4-diag viewer docs/diagrams
+poetry run pytest tests -v
+```
+
+## Embed in Markdown
+
+After generating `architecture.mmd`, copy the Mermaid block into README:
 
 ````markdown
-# My Project
-
 ## Architecture
 
 ```mermaid
 graph LR
-    subgraph models.py
-        User["User (3 methods)"]
-        Post["Post (5 methods)"]
-    end
-
-    subgraph views.py
-        index["index"]
-        profile["profile"]
-    end
-
-    views.py --> models.py
+  ...
 ```
-
-See [full diagrams](docs/diagrams/) for details.
 ````
 
-## Next Steps
+GitHub renders Mermaid natively in Markdown files.
 
-- [User Guide](user-guide/analyzing-code.md) - Detailed usage
-- [CLI Reference](reference/cli.md) - All commands
-- [Contributing](contributing.md) - Add your own examples
+## Next steps
+
+- [Quick Start](getting-started/quick-start.md)
+- [Programmatic Usage](user-guide/programmatic-usage.md)
+- [Contributing](contributing.md)

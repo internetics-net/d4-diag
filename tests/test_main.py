@@ -284,10 +284,17 @@ class TestMainFunction:
         with patch("sys.argv", ["d4-diag", "-v", "test.py"]):
             with patch("d4_diag.main.cli.main") as mock_cli_main:
                 main()
-                # Should insert 'analyze' after flags
                 mock_cli_main.assert_called_once()
                 args = mock_cli_main.call_args.kwargs.get("args")
-                assert args == ["-v", "analyze", "test.py"]
+                assert args == ["analyze", "-v", "test.py"]
+
+    def test_main_backward_compatibility_with_output_dir(self):
+        """Legacy CLI: flags before paths must keep option values intact."""
+        with patch("sys.argv", ["d4-diag", "-o", "./out", "test.py"]):
+            with patch("d4_diag.main.cli.main") as mock_cli_main:
+                main()
+                args = mock_cli_main.call_args.kwargs.get("args")
+                assert args == ["analyze", "-o", "./out", "test.py"]
 
     def test_main_separator_handling(self):
         """Test main() with -- separator."""

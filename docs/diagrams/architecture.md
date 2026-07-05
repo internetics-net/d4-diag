@@ -1,5 +1,11 @@
 # Architecture Diagram
 
+Sample output from analyzing **d4-diag** itself. Regenerate with:
+
+```bash
+poetry run d4-diag analyze src/ --output-dir docs/diagrams
+```
+
 ```mermaid
 graph LR
     classDef fileStyle fill:#37474F,stroke:#263238,color:#ECEFF1,font-weight:bold;

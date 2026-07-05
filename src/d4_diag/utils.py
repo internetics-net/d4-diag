@@ -8,6 +8,26 @@ from pathlib import Path
 from typing import List, Union
 
 
+def is_within_directory(path: Union[str, Path], base: Union[str, Path]) -> bool:
+    """Return True if ``path`` resolves to a location under ``base``."""
+    try:
+        Path(path).resolve().relative_to(Path(base).resolve())
+        return True
+    except (ValueError, OSError):
+        return False
+
+
+def safe_join_directory(base: Union[str, Path], filename: str) -> Path:
+    """Join a basename under ``base`` and reject path traversal."""
+    if not filename or Path(filename).name != filename or filename in (".", ".."):
+        raise ValueError(f"Invalid output filename: {filename!r}")
+    base_resolved = Path(base).resolve()
+    target = (base_resolved / filename).resolve()
+    if not is_within_directory(target, base_resolved):
+        raise ValueError(f"Refusing to write outside output directory: {target}")
+    return target
+
+
 def sanitize_id(name: str) -> str:
     """Sanitize a string for use as a Mermaid node/subgraph ID."""
     if not name:
@@ -84,6 +104,9 @@ def find_python_files(root_path: str) -> List[str]:
     Automatically excludes virtual environments, caches, and other
     non-source directories.
     """
+    root = Path(root_path)
+    if root.is_symlink():
+        return []
     root = Path(os.path.abspath(root_path))
     if root.is_file():
         if root.suffix == ".py" and not root.is_symlink():

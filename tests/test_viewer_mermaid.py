@@ -238,3 +238,45 @@ flowchart TD
         viewer_path = temp_project_dir / "_d4_diag_viewer.html"
         assert viewer_path.is_file()
         mock_browser.assert_called_once()
+        uri_arg = mock_browser.call_args[0][0]
+        assert uri_arg.startswith("file:")
+
+    def test_find_diagram_files_skips_symlinks(self, temp_project_dir):
+        """Symlinked .mmd files must not be loaded into the viewer."""
+        real = temp_project_dir / "real.mmd"
+        real.write_text("graph LR\nA-->B", encoding="utf-8")
+        link = temp_project_dir / "linked.mmd"
+        link.symlink_to(real)
+
+        try:
+            found = find_diagram_files(str(temp_project_dir))
+            assert len(found) == 1
+            assert found[0].name == "real.mmd"
+        finally:
+            link.unlink(missing_ok=True)
+
+    def test_read_diagram_content_rejects_symlink(self, temp_project_dir):
+        target = temp_project_dir / "target.mmd"
+        target.write_text("graph LR\nA-->B", encoding="utf-8")
+        link = temp_project_dir / "link.mmd"
+        link.symlink_to(target)
+
+        try:
+            with pytest.raises(FileNotFoundError, match="symlink"):
+                read_diagram_content(link)
+        finally:
+            link.unlink(missing_ok=True)
+
+    def test_view_diagrams_opens_file_uri(self, temp_project_dir):
+        (temp_project_dir / "test.mmd").write_text("graph LR\nA-->B")
+
+        with patch("webbrowser.open") as mock_browser:
+            view_diagrams(str(temp_project_dir), open_browser=True)
+
+        uri = mock_browser.call_args[0][0]
+        assert (
+            Path(uri.replace("file:///", "").replace("file://", "")).name.endswith(
+                "_d4_diag_viewer.html"
+            )
+            or "_d4_diag_viewer.html" in uri
+        )

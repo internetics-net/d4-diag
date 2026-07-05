@@ -1,138 +1,105 @@
 # Viewing Diagrams
 
-The D4-Diag viewer provides an interactive web interface for browsing generated diagrams.
+The **d4-diag** viewer renders `.mmd` diagrams in a local HTML page with tabs and lazy Mermaid rendering.
 
-## Starting the Viewer
-
-```bash
-d4-diag viewer <diagrams_directory>
-```
-
-Or as a Python module:
+## Start the viewer
 
 ```bash
-python -m d4_diag viewer <diagrams_directory>
+d4-diag viewer [diagrams_directory] [--no-browser]
 ```
 
-### Example
+Defaults to `docs/diagrams` when the directory argument is omitted.
 
 ```bash
-# After analyzing a project
-d4-diag analyze /path/to/project
-
-# View the diagrams
-d4-diag viewer /path/to/project/docs/diagrams
-
-# Open without launching browser automatically
-d4-diag viewer /path/to/project/docs/diagrams --no-browser
+d4-diag analyze ./src
+d4-diag viewer ./docs/diagrams
+d4-diag viewer ./docs/diagrams --no-browser
 ```
 
-## Viewer Interface
+Standalone script (Poetry dev checkout):
 
-The viewer opens in your default browser with:
-
-- **Tab navigation** - Switch between diagram types
-- **Scrollable canvas** - Pan around large diagrams
-- **Full-size rendering** - Diagrams render at actual size
-- **Lazy loading** - Diagrams render only when their tab is clicked
-
-## Features
-
-### Tab Switching
-
-Click any tab to view that diagram:
-- Architecture
-- Class Diagram
-- Module Dependencies
-
-### Scrolling
-
-Large diagrams are scrollable:
-- **Horizontal scroll** - Pan left/right
-- **Vertical scroll** - Pan up/down
-- **Mouse wheel** - Scroll vertically
-
-### Zoom
-
-Use browser zoom controls:
-- `Ctrl +` / `Cmd +` - Zoom in
-- `Ctrl -` / `Cmd -` - Zoom out
-- `Ctrl 0` / `Cmd 0` - Reset zoom
-
-## Diagram Rendering
-
-### Lazy Rendering
-
-Diagrams are rendered on-demand when you click their tab. This prevents:
-- Slow initial page load
-- Rendering hidden elements (which causes tiny boxes)
-- Memory issues with many large diagrams
-
-### Error Handling
-
-If a diagram fails to render, you'll see:
-```
-Diagram render error: <error message>
+```bash
+poetry run view ./docs/diagrams
 ```
 
-Common causes:
-- Invalid Mermaid syntax (report as bug)
-- Diagram too large (increase browser memory)
+## Generated HTML
 
-## Technical Details
+The viewer writes:
 
-### Mermaid Version
+```
+<diagrams_dir>/_d4_diag_viewer.html
+```
 
-The viewer uses **Mermaid v10.9.0** for compatibility.
+Open that file directly in a browser if you used `--no-browser`.
 
-### Configuration
+## Interface
 
-Mermaid is configured with:
+- **Tabs** — one per `.mmd` file (Architecture, Class Diagram, Module Dependencies)
+- **Lazy rendering** — diagram parsed when its tab is selected (`startOnLoad: false`)
+- **Scrollable canvas** — pan large graphs with scrollbars
+- **Project title** — read from nearest `pyproject.toml` `name` field
+
+## Security-related behavior
+
+The viewer is designed for **local, trusted** diagram folders:
+
+| Control | Detail |
+|---------|--------|
+| HTML escaping | Project name and tab labels escaped with `html.escape` |
+| Diagram embedding | Source stored in `type="text/plain"` blocks; `</script>` sequences neutralized |
+| Mermaid | `securityLevel: 'strict'`, `htmlLabels: false` |
+| CDN | Mermaid 10.9.0 from jsDelivr with **SRI** integrity attribute |
+| File size | Diagram files **> 10 MB** are rejected |
+
+See [Security](../SECURITY.md) for full notes.
+
+## Mermaid configuration
+
 ```javascript
-{
-  startOnLoad: false,      // Lazy rendering
-  maxTextSize: 500000,     // Support large diagrams
-  maxEdges: 5000,          // Support complex graphs
-  useMaxWidth: false       // Full-size rendering
-}
+mermaid.initialize({
+  startOnLoad: false,
+  securityLevel: 'strict',
+  maxTextSize: 5000000,
+  maxEdges: 5000,
+  flowchart: { useMaxWidth: false, htmlLabels: false },
+  deterministicIDs: true,
+  deterministicIDSeed: 'd4-diag',
+});
 ```
 
-### Browser Compatibility
+## Browser support
 
-Tested on:
-- Chrome/Edge (recommended)
-- Firefox
-- Safari
+Tested: Chrome, Edge, Firefox, Safari.
+
+Zoom: browser shortcuts (`Ctrl/Cmd +`, `-`, `0`).
 
 ## Tips
 
-### Large Diagrams
+**Large diagrams**
 
-For projects with many files:
-1. Use browser zoom to get an overview
-2. Scroll to focus on specific areas
-3. Consider analyzing subdirectories separately
+- Zoom out for overview, scroll to focus areas
+- Analyze subdirectories separately if needed
 
-### Saving Diagrams
+**Save as image**
 
-To save a diagram:
-1. Right-click the diagram
-2. Select "Save image as..."
-3. Save as PNG or SVG
+- Right-click rendered diagram → Save image (browser-dependent)
+- Or use [Mermaid CLI](https://github.com/mermaid-js/mermaid-cli) on `.mmd` files
 
-Alternatively, the `.mmd` files can be:
-- Opened in any Mermaid editor
-- Embedded in Markdown documentation
-- Converted to images with Mermaid CLI
+**Share**
 
-### Sharing
+- Commit `.mmd` files to the repo
+- Embed Mermaid blocks in GitHub Markdown READMEs
+- Regenerate `_d4_diag_viewer.html` locally (optional to commit)
 
-Share diagrams by:
-1. Committing `.mmd` files to your repo
-2. Using GitHub's Mermaid rendering in README
-3. Hosting the viewer HTML (it's self-contained)
+## Errors
 
-## Next Steps
+If rendering fails, the tab shows a Mermaid error message. Common causes:
 
-- [Diagram Types](diagram-types.md) - Understand what each diagram shows
-- [Examples](../examples.md) - See real-world usage
+- Invalid Mermaid syntax in generated output (file a bug)
+- Extremely large graphs (browser memory)
+
+## Next steps
+
+- [Diagram Types](diagram-types.md)
+- [Examples](../examples.md)
+- [CLI Reference](../reference/cli.md)

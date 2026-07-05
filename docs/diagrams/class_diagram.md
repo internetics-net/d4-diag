@@ -1,5 +1,7 @@
 # Class Diagram
 
+Sample class diagram. Regenerate with `d4-diag analyze src/ --output-dir docs/diagrams`.
+
 ```mermaid
 classDiagram
     class NoClassesFound

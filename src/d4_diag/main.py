@@ -74,6 +74,9 @@ def _collect_python_files(paths: List[Path], verbose: bool) -> List[str]:
 
     for path in paths:
         if path.is_dir():
+            if path.is_symlink():
+                click.echo(f"Warning: Skipping symlink directory: {path}", err=True)
+                continue
             if verbose:
                 click.echo(f"Scanning directory: {path}")
             found = find_python_files(str(path))
@@ -222,8 +225,8 @@ def viewer(diagrams_dir, no_browser):
         click.echo(f"Error: Path is not a directory: {diagrams_dir}", err=True)
         sys.exit(EXIT_ERROR)
 
-    # Check if directory contains .mmd files
-    mmd_files = list(diagrams_dir.glob("*.mmd"))
+    # Check if directory contains .mmd files (ignore symlinks)
+    mmd_files = [p for p in diagrams_dir.glob("*.mmd") if not p.is_symlink()]
     if not mmd_files:
         click.echo(f"Warning: No .mmd diagram files found in: {diagrams_dir}", err=True)
         click.echo("Hint: Run 'd4-diag analyze' first to generate diagrams.", err=True)
@@ -309,14 +312,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     # If first argument is not a known command, treat as analyze for backward compatibility
     if len(argv) > 1 and argv[1] not in KNOWN_COMMANDS:
-        # Find the right position to insert 'analyze' (before first non-flag)
-        insert_pos = 1
-        for i, arg in enumerate(argv[1:], 1):
-            if arg.startswith("-") and arg not in ["--help", "-h", "--version"]:
-                insert_pos = i + 1
-            else:
-                break
-        argv.insert(insert_pos, "analyze")
+        argv.insert(1, "analyze")
 
     try:
         cli.main(args=argv[1:], standalone_mode=False)

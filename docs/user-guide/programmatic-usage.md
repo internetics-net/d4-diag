@@ -1,317 +1,146 @@
 # Programmatic Usage
 
-D4-Diag can be used as a Python library for programmatic diagram generation.
+Use **d4-diag** as a library for diagram generation in scripts, CI, or services.
 
-## New API (v0.2.0+)
-
-The enhanced API returns diagrams as a dictionary by default, with optional file saving.
-
-### Basic Usage - Return Dictionary
+## Basic flow
 
 ```python
-from d4_diag.main import CodeMapAnalyzer, find_python_files
+from d4_diag import CodeMapAnalyzer, find_python_files
 
-# Setup
 project_root = "/path/to/project"
 files = find_python_files(project_root)
 
-# Analyze
 analyzer = CodeMapAnalyzer(project_root)
 analyzer.build_module_map(files)
 
 for file_path in files:
     analyzer.analyze_file(file_path)
 
-# Generate diagrams - returns dictionary, doesn't save files
+# Return dict — does not write files by default
 diagrams = analyzer.generate_all()
+print(diagrams["architecture.mmd"][:200])
 
-# Access diagram content
-print(diagrams['architecture.mmd'])
-print(diagrams['class_diagram.mmd'])
-print(diagrams['module_deps.mmd'])
-```
+# Save to default location
+analyzer.generate_all(save_files=True)
 
-### Save to Default Location
-
-```python
-# Save to {project_root}/docs/diagrams
-diagrams = analyzer.generate_all(save_files=True)
-```
-
-### Save to Custom Location
-
-```python
 # Save to custom directory
-diagrams = analyzer.generate_all(
-    save_files=True,
-    output_dir="/custom/output/path"
+analyzer.generate_all(save_files=True, output_dir="/custom/output")
+```
+
+## `generate_all` API
+
+```python
+diagrams: dict[str, str] = analyzer.generate_all(
+    save_files=False,       # True to write .mmd files
+    output_dir=None,        # default: {project_root}/docs/diagrams
 )
 ```
 
-## API Reference
+Keys: `architecture.mmd`, `class_diagram.mmd`, `module_deps.mmd`.
 
-### `CodeMapAnalyzer`
-
-Main class for code analysis and diagram generation.
-
-#### Constructor
+Individual generators also return strings:
 
 ```python
-analyzer = CodeMapAnalyzer(project_root: str)
+arch = analyzer.generate_architecture()
+analyzer.generate_class_diagram(output_file="out/class.mmd")
 ```
 
-**Parameters:**
-- `project_root` (str): Absolute path to project root directory
-
-#### Methods
-
-##### `build_module_map(file_paths: List[str])`
-
-Build mapping from module names to file paths for import resolution.
+## Open the viewer from Python
 
 ```python
-analyzer.build_module_map(file_paths)
+from d4_diag.viewer_mermaid import view_diagrams
+
+view_diagrams("docs/diagrams", open_browser=False)
 ```
 
-##### `analyze_file(file_path: str)`
+## Use cases
 
-Analyze a single Python file and extract classes, functions, and imports.
-
-```python
-analyzer.analyze_file("/path/to/file.py")
-```
-
-##### `generate_all(save_files: bool = False, output_dir: Optional[str] = None) -> Dict[str, str]`
-
-Generate all three diagram types and return as dictionary.
-
-```python
-diagrams = analyzer.generate_all(
-    save_files=False,      # Set to True to save files
-    output_dir=None        # Custom output directory (optional)
-)
-```
-
-**Parameters:**
-- `save_files` (bool): If True, save diagrams to files (default: False)
-- `output_dir` (str, optional): Directory to save files. If None and save_files=True, defaults to `{project_root}/docs/diagrams`
-
-**Returns:**
-- `Dict[str, str]`: Dictionary mapping filenames to mmd content
-  - `'architecture.mmd'`: Architecture overview diagram
-  - `'class_diagram.mmd'`: UML class diagram
-  - `'module_deps.mmd'`: Module dependency graph
-
-##### Individual Diagram Methods
-
-Generate specific diagrams:
-
-```python
-# Generate individual diagrams
-arch_content = analyzer.generate_architecture()
-class_content = analyzer.generate_class_diagram()
-deps_content = analyzer.generate_module_deps()
-
-# Or save to file
-analyzer.generate_architecture(output_file="/path/to/arch.mmd")
-```
-
-##### `print_summary()`
-
-Print analysis summary to stdout.
-
-```python
-analyzer.print_summary()
-```
-
-### Utility Functions
-
-#### `find_python_files(root_path: str) -> List[str]`
-
-Recursively find all Python files in a directory.
-
-```python
-from d4_diag.main import find_python_files
-
-files = find_python_files("/path/to/project")
-```
-
-## Use Cases
-
-### 1. Web Service Integration
-
-```python
-from flask import Flask, jsonify
-from d4_diag.main import CodeMapAnalyzer, find_python_files
-
-app = Flask(__name__)
-
-@app.route('/analyze', methods=['POST'])
-def analyze_project():
-    project_path = request.json['path']
-
-    files = find_python_files(project_path)
-    analyzer = CodeMapAnalyzer(project_path)
-    analyzer.build_module_map(files)
-
-    for fp in files:
-        analyzer.analyze_file(fp)
-
-    # Return diagrams as JSON
-    diagrams = analyzer.generate_all()
-    return jsonify(diagrams)
-```
-
-### 2. CI/CD Pipeline
+### CI / documentation pipeline
 
 ```python
 import os
-from d4_diag.main import CodeMapAnalyzer, find_python_files
+from d4_diag import CodeMapAnalyzer, find_python_files
 
-def generate_docs_for_ci():
-    """Generate diagrams in CI pipeline"""
-    project_root = os.getenv('CI_PROJECT_DIR', '.')
-
-    files = find_python_files(project_root)
-    analyzer = CodeMapAnalyzer(project_root)
+def generate_docs_diagrams():
+    root = os.environ.get("CI_PROJECT_DIR", ".")
+    files = find_python_files(root)
+    analyzer = CodeMapAnalyzer(root)
     analyzer.build_module_map(files)
-
     for fp in files:
         analyzer.analyze_file(fp)
-
-    # Save to docs directory for deployment
     analyzer.generate_all(
         save_files=True,
-        output_dir=os.path.join(project_root, 'docs', 'diagrams')
+        output_dir=os.path.join(root, "docs", "diagrams"),
     )
-
-    print("Diagrams generated for documentation site")
 ```
 
-### 3. Custom Processing
+### Custom metrics report
 
 ```python
-from d4_diag.main import CodeMapAnalyzer, find_python_files
+from d4_diag import CodeMapAnalyzer, find_python_files
 
-def analyze_and_report(project_path):
-    """Analyze project and generate custom report"""
+def analyze_and_report(project_path: str) -> dict:
     files = find_python_files(project_path)
     analyzer = CodeMapAnalyzer(project_path)
     analyzer.build_module_map(files)
-
     for fp in files:
         analyzer.analyze_file(fp)
 
-    # Get diagrams
     diagrams = analyzer.generate_all()
-
-    # Custom processing
-    report = {
-        'file_count': len(analyzer.files),
-        'class_count': sum(len(f['classes']) for f in analyzer.files.values()),
-        'function_count': sum(len(f['functions']) for f in analyzer.files.values()),
-        'import_count': len(analyzer.import_edges),
-        'diagrams': {
-            name: {
-                'size': len(content),
-                'lines': content.count('\n') + 1,
-                'nodes': content.count('['),
-                'edges': content.count('-->')
-            }
-            for name, content in diagrams.items()
-        }
+    return {
+        "files": len(analyzer.files),
+        "classes": sum(len(f["classes"]) for f in analyzer.files.values()),
+        "functions": sum(len(f["functions"]) for f in analyzer.files.values()),
+        "imports": len(analyzer.import_edges),
+        "diagram_sizes": {k: len(v) for k, v in diagrams.items()},
     }
-
-    return report
 ```
 
-### 4. Batch Processing
+### Batch projects
 
 ```python
-from d4_diag.main import CodeMapAnalyzer, find_python_files
-import os
+from d4_diag import CodeMapAnalyzer, find_python_files
 
-def analyze_multiple_projects(projects):
-    """Analyze multiple projects and save diagrams"""
-    results = {}
-
-    for project_name, project_path in projects.items():
-        print(f"Analyzing {project_name}...")
-
-        files = find_python_files(project_path)
-        analyzer = CodeMapAnalyzer(project_path)
+def analyze_projects(paths: dict[str, str]) -> None:
+    for name, root in paths.items():
+        files = find_python_files(root)
+        analyzer = CodeMapAnalyzer(root)
         analyzer.build_module_map(files)
-
         for fp in files:
             analyzer.analyze_file(fp)
-
-        # Save each project's diagrams
-        output_dir = f"analysis_results/{project_name}"
-        diagrams = analyzer.generate_all(save_files=True, output_dir=output_dir)
-
-        results[project_name] = {
-            'files': len(files),
-            'diagrams': list(diagrams.keys()),
-            'output': output_dir
-        }
-
-    return results
-
-# Usage
-projects = {
-    'project-a': '/path/to/project-a',
-    'project-b': '/path/to/project-b',
-    'project-c': '/path/to/project-c'
-}
-
-results = analyze_multiple_projects(projects)
+        out = f"analysis_results/{name}"
+        analyzer.generate_all(save_files=True, output_dir=out)
+        print(f"{name}: {len(files)} files → {out}")
 ```
 
-## Migration from Old API
+## Migration note
 
-### Before (v0.1.0)
+Older examples called `generate_all(output_dir)` with a positional output path. Current API:
 
 ```python
-# Old API - always saved files
-analyzer.generate_all(output_dir)
+# Before (legacy)
+analyzer.generate_all("docs/diagrams")
+
+# Now
+analyzer.generate_all(save_files=True, output_dir="docs/diagrams")
 ```
 
-### After (v0.2.0+)
+Calling `generate_all()` with no arguments returns content only (no files written).
+
+## Error handling
+
+- `analyze_file` logs syntax errors and continues
+- `find_python_files` returns `[]` for missing/non-directory paths
+- Empty file list should be handled before analysis
 
 ```python
-# New API - return dictionary by default
-diagrams = analyzer.generate_all()
-
-# Or save files (backward compatible)
-diagrams = analyzer.generate_all(save_files=True, output_dir=output_dir)
+files = find_python_files(project_path)
+if not files:
+    raise SystemExit("No Python files found")
 ```
 
-## Error Handling
+## Related
 
-```python
-from d4_diag.main import CodeMapAnalyzer, find_python_files
-
-try:
-    files = find_python_files(project_path)
-
-    if not files:
-        print("No Python files found")
-        return
-
-    analyzer = CodeMapAnalyzer(project_path)
-    analyzer.build_module_map(files)
-
-    for fp in files:
-        analyzer.analyze_file(fp)  # Errors are logged, not raised
-
-    diagrams = analyzer.generate_all()
-
-except Exception as e:
-    print(f"Error during analysis: {e}")
-```
-
-## Next Steps
-
-- [CLI Reference](../reference/cli.md) - Command-line usage
-- [API Reference](../reference/api.md) - Complete API documentation
-- [Examples](../examples.md) - More usage examples
+- [API Reference](../reference/api.md)
+- [CLI Reference](../reference/cli.md)
+- [Examples](../examples.md)
