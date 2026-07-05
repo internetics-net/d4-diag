@@ -179,3 +179,6 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Generated HTML viewer (d4-diag viewer command)
+_d4_diag_viewer.html

@@ -82,6 +82,9 @@ def _collect_python_files(paths: List[Path], verbose: bool) -> List[str]:
             # Ensure all paths are strings for consistency with analyzer
             all_files.extend([str(f) for f in found])
         elif path.suffix == ".py":
+            if path.is_symlink():
+                click.echo(f"Warning: Skipping symlink: {path}", err=True)
+                continue
             if verbose:
                 click.echo(f"Adding file: {path}")
             all_files.append(str(path))

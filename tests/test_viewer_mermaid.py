@@ -37,15 +37,25 @@ class TestViewerFunctions:
         with pytest.raises(FileNotFoundError):
             find_diagram_files("/nonexistent")
 
-    def test_read_diagram_content(self, sample_python_file):
+    def test_read_diagram_content(self, temp_project_dir):
         """Test reading diagram content."""
-        content = read_diagram_content(str(sample_python_file))
-        assert "sample_function" in content
+        diagram_file = temp_project_dir / "sample.mmd"
+        diagram_file.write_text("```mermaid\ngraph LR\nA-->B\n```", encoding="utf-8")
+        content = read_diagram_content(diagram_file)
+        assert "graph LR" in content
+        assert "A-->B" in content
 
     def test_read_diagram_content_nonexistent(self):
         """Test reading nonexistent diagram file."""
         with pytest.raises(FileNotFoundError):
-            read_diagram_content("/nonexistent/file.mmd")
+            read_diagram_content(Path("/nonexistent/file.mmd"))
+
+    def test_read_diagram_content_too_large(self, temp_project_dir):
+        """Test rejecting oversized diagram files."""
+        huge = temp_project_dir / "huge.mmd"
+        huge.write_bytes(b"x" * (10 * 1024 * 1024 + 1))
+        with pytest.raises(FileNotFoundError, match="too large"):
+            read_diagram_content(huge)
 
     def test_extract_mermaid_code(self):
         """Test extracting Mermaid code from content."""
@@ -102,6 +112,12 @@ classDiagram
             assert "mermaid" in html_content.lower()
             assert "graph LR" in html_content
             assert "securityLevel: 'strict'" in html_content
+            assert 'class="mermaid-source"' in html_content
+            assert 'integrity="sha384-' in html_content
+            assert 'crossorigin="anonymous"' in html_content
+            assert "htmlLabels: false" in html_content
+            assert "mermaidDiv.innerHTML = '<p" not in html_content
+            assert "mermaidDiv.innerHTML = '<div" not in html_content
         finally:
             Path(html_path).unlink(missing_ok=True)
 
@@ -190,3 +206,35 @@ flowchart TD
 """
         result = extract_mermaid_code(content)
         assert result == "flowchart TD\n    A --> B"
+
+    def test_extract_mermaid_code_same_line_opening(self):
+        """Test extracting Mermaid code when opening fence has no newline."""
+        content = "```mermaid\ngraph LR\n    A --> B\n```"
+        result = extract_mermaid_code(content)
+        assert result == "graph LR\n    A --> B"
+
+    def test_generate_html_viewer_escapes_script_closing_tag(self):
+        """Diagram source must not break out of the script container."""
+        malicious = "```mermaid\ngraph LR\nA-->B\n</script><img onerror=alert(1)>\n```"
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False) as f:
+            html_path = f.name
+
+        try:
+            generate_html_viewer({"evil": malicious}, html_path)
+            html_content = Path(html_path).read_text(encoding="utf-8")
+            assert "</script><img" not in html_content
+            assert r"<\/script>" in html_content
+        finally:
+            Path(html_path).unlink(missing_ok=True)
+
+    def test_view_diagrams_writes_viewer_beside_diagrams(self, temp_project_dir):
+        """Viewer HTML is written next to diagrams, not in system temp."""
+        (temp_project_dir / "test.mmd").write_text("graph LR\nA-->B")
+
+        with patch("webbrowser.open") as mock_browser:
+            view_diagrams(str(temp_project_dir), open_browser=True)
+
+        viewer_path = temp_project_dir / "_d4_diag_viewer.html"
+        assert viewer_path.is_file()
+        mock_browser.assert_called_once()

@@ -202,3 +202,22 @@ class TestFindPythonFiles:
 
         result = find_python_files(str(temp_project_dir))
         assert str(invalid_py) in result  # Should still be found by extension
+
+    def test_skips_symlinked_python_files(self, temp_project_dir):
+        """Symlinked files outside the project tree must not be discovered."""
+        outside_dir = temp_project_dir.parent / "outside_d4_diag"
+        outside_dir.mkdir(exist_ok=True)
+        outside_file = outside_dir / "secret.py"
+        outside_file.write_text("SECRET = True\n")
+
+        link_dir = temp_project_dir / "linked"
+        link_dir.symlink_to(outside_dir, target_is_directory=True)
+
+        try:
+            result = find_python_files(str(temp_project_dir))
+            assert not any("secret.py" in f for f in result)
+            assert not any("outside_d4_diag" in f for f in result)
+        finally:
+            link_dir.unlink(missing_ok=True)
+            outside_file.unlink(missing_ok=True)
+            outside_dir.rmdir()

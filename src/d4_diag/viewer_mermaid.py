@@ -1,10 +1,14 @@
 import html
 import re
 import sys
-import tempfile
 import webbrowser
 from pathlib import Path
 from typing import Dict, List
+
+MERMAID_CDN_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"
+MERMAID_CDN_INTEGRITY = "sha384-6F4Ibv/ylL12O35KFWTeGTHuBKDz5L6yjKsgv3QHQ8s4NTqlDXq7kMlYXGs7MHFc"
+VIEWER_HTML_NAME = "_d4_diag_viewer.html"
+MAX_DIAGRAM_FILE_SIZE = 10 * 1024 * 1024  # 10MB, aligned with CodeMapAnalyzer
 
 
 def find_diagram_files(diagrams_dir: str) -> List[Path]:
@@ -27,9 +31,16 @@ def find_diagram_files(diagrams_dir: str) -> List[Path]:
 def read_diagram_content(file_path: Path) -> str:
     """Read the content of a diagram file"""
     try:
+        size = file_path.stat().st_size
+        if size > MAX_DIAGRAM_FILE_SIZE:
+            raise FileNotFoundError(
+                f"Diagram file too large ({size} bytes, max {MAX_DIAGRAM_FILE_SIZE}): {file_path}"
+            )
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
         return content
+    except FileNotFoundError:
+        raise
     except (IOError, OSError, UnicodeDecodeError) as e:
         raise FileNotFoundError(f"Error reading {file_path}: {e}") from e
 
@@ -38,8 +49,8 @@ def extract_mermaid_code(content: str) -> str:
     """Extract Mermaid code from markdown code blocks"""
     content = content.strip()
 
-    # Pattern to match ```mermaid ... ``` with optional indentation
-    pattern = r"^\s*```mermaid\n(.*?)\n\s*```"
+    # Pattern to match ```mermaid ... ``` with optional indentation and whitespace
+    pattern = r"^\s*```mermaid\s*\n?(.*?)\n\s*```"
     match = re.search(pattern, content, re.MULTILINE | re.DOTALL)
 
     if match:
@@ -51,6 +62,11 @@ def extract_mermaid_code(content: str) -> str:
 
 def _escape_html(text: str) -> str:
     return html.escape(text, quote=True)
+
+
+def _escape_script_body(text: str) -> str:
+    """Prevent closing the embedding script tag when storing diagram source."""
+    return text.replace("</script>", r"<\/script>").replace("</SCRIPT>", r"<\/SCRIPT>")
 
 
 def read_project_name(start_dir: Path) -> str:
@@ -87,7 +103,7 @@ def generate_html_viewer(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{project_name} Viewer</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <script src="{mermaid_cdn_url}" integrity="{mermaid_cdn_integrity}" crossorigin="anonymous"></script>
     <script>
         mermaid.initialize({
             startOnLoad: false,
@@ -97,7 +113,7 @@ def generate_html_viewer(
             maxEdges: 5000,
             flowchart: {
                 useMaxWidth: false,
-                htmlLabels: true,
+                htmlLabels: false,
                 curve: 'basis'
             },
             // Performance optimizations
@@ -252,25 +268,61 @@ def generate_html_viewer(
     <script>
         const rendered = {};
 
+        function getMermaidCode(container) {
+            const source = container.querySelector('.mermaid-source');
+            return source ? source.textContent.trim() : '';
+        }
+
+        function clearElement(element) {
+            while (element.firstChild) {
+                element.removeChild(element.firstChild);
+            }
+        }
+
+        function appendRawCodeBlock(parent, code) {
+            const details = document.createElement('details');
+            const summary = document.createElement('summary');
+            summary.textContent = 'Click to view raw diagram code';
+            const pre = document.createElement('pre');
+            pre.style.fontSize = '12px';
+            pre.style.maxHeight = '300px';
+            pre.style.overflow = 'auto';
+            pre.textContent = code;
+            details.appendChild(summary);
+            details.appendChild(pre);
+            parent.appendChild(details);
+        }
+
         async function renderMermaid(container) {
             const mermaidDiv = container.querySelector('.mermaid');
             if (!mermaidDiv || rendered[container.id]) return;
 
+            const code = getMermaidCode(container);
+
             try {
-                const code = mermaidDiv.textContent.trim();
                 console.log(`Rendering diagram ${container.id}, code length:`, code.length);
 
-                // Show loading indicator
-                mermaidDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#666;">🔄 Rendering diagram...</div>';
+                clearElement(mermaidDiv);
+                const loading = document.createElement('div');
+                loading.style.textAlign = 'center';
+                loading.style.padding = '20px';
+                loading.style.color = '#666';
+                loading.textContent = '🔄 Rendering diagram...';
+                mermaidDiv.appendChild(loading);
 
-                // Check if diagram is too large
                 if (code.length > 50000) {
-                    mermaidDiv.innerHTML = '<p style="color:orange;">⚠️ Diagram too large to render (' + code.length + ' characters). Maximum recommended size is 50,000 characters.</p><details><summary>Click to view raw diagram code</summary><pre style="font-size:12px;max-height:300px;overflow:auto;">' + code + '</pre></details>';
+                    clearElement(mermaidDiv);
+                    const warning = document.createElement('p');
+                    warning.style.color = 'orange';
+                    warning.textContent =
+                        '⚠️ Diagram too large to render (' + code.length +
+                        ' characters). Maximum recommended size is 50,000 characters.';
+                    mermaidDiv.appendChild(warning);
+                    appendRawCodeBlock(mermaidDiv, code);
                     rendered[container.id] = true;
                     return;
                 }
 
-                // Add timeout for large diagrams
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Rendering timeout - diagram too complex')), 10000)
                 );
@@ -288,7 +340,12 @@ def generate_html_viewer(
                     '⏰ Diagram rendering timed out (too complex). Try simplifying the diagram or breaking it into smaller parts.' :
                     '❌ Diagram render error: ' + e.message;
 
-                mermaidDiv.innerHTML = '<p style="color:red;">' + errorMsg + '</p><details><summary>Click to view raw diagram code</summary><pre style="font-size:12px;max-height:300px;overflow:auto;">' + mermaidDiv.textContent + '</pre></details>';
+                clearElement(mermaidDiv);
+                const error = document.createElement('p');
+                error.style.color = 'red';
+                error.textContent = errorMsg;
+                mermaidDiv.appendChild(error);
+                appendRawCodeBlock(mermaidDiv, code);
             }
         }
 
@@ -339,13 +396,14 @@ def generate_html_viewer(
                 f"{safe_name}</button>"
             )
 
-            mermaid_code = _escape_html(extract_mermaid_code(content))
+            mermaid_code = _escape_script_body(extract_mermaid_code(content))
             diagram_sections.append(
                 f"""
         <div id="{diagram_id}" class="diagram-container">
             <h2 class="diagram-title">{safe_name}</h2>
             <div class="diagram">
-                <div class="mermaid">{mermaid_code}</div>
+                <script type="text/plain" class="mermaid-source">{mermaid_code}</script>
+                <div class="mermaid"></div>
             </div>
         </div>"""
             )
@@ -358,6 +416,8 @@ def generate_html_viewer(
     html_content = html_content.replace("{diagrams_html}", diagrams_html)
     html_content = html_content.replace("{no_diagrams_html}", no_diagrams_html)
     html_content = html_content.replace("{project_name}", _escape_html(project_name))
+    html_content = html_content.replace("{mermaid_cdn_url}", MERMAID_CDN_URL)
+    html_content = html_content.replace("{mermaid_cdn_integrity}", MERMAID_CDN_INTEGRITY)
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
@@ -388,14 +448,10 @@ def view_diagrams(diagrams_dir: str, open_browser: bool = True):
     diagrams_path = Path(diagrams_dir)
     project_name = read_project_name(diagrams_path)
 
-    # Generate HTML viewer
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".html", delete=False, encoding="utf-8"
-    ) as tmp:
-        html_path = tmp.name
-
+    # Generate HTML viewer alongside diagrams (no temp-file leak)
+    html_path = diagrams_path / VIEWER_HTML_NAME
     try:
-        html_file = generate_html_viewer(diagrams, html_path, project_name)
+        html_file = generate_html_viewer(diagrams, str(html_path), project_name)
     except Exception as e:
         raise IOError(f"Failed to generate HTML viewer: {e}") from e
 

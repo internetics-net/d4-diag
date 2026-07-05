@@ -86,15 +86,29 @@ def find_python_files(root_path: str) -> List[str]:
     """
     root = Path(os.path.abspath(root_path))
     if root.is_file():
-        return [str(root)] if root.suffix == ".py" else []
+        if root.suffix == ".py" and not root.is_symlink():
+            return [str(root)]
+        return []
     if not root.is_dir():
         return []
 
     results = []
-    for p in root.rglob("*.py"):
-        # Check if any parent directory should be excluded
-        parts = p.relative_to(root).parts
-        if any(_is_excluded_dir(part) for part in parts):
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        current = Path(dirpath)
+        rel_parts = current.relative_to(root).parts
+        if any(_is_excluded_dir(part) for part in rel_parts):
+            dirnames.clear()
             continue
-        results.append(str(p))
+
+        dirnames[:] = [
+            d for d in dirnames if not _is_excluded_dir(d) and not (current / d).is_symlink()
+        ]
+
+        for fname in filenames:
+            if not fname.endswith(".py"):
+                continue
+            p = current / fname
+            if p.is_symlink():
+                continue
+            results.append(str(p))
     return results
