@@ -2,6 +2,8 @@
 # It is kept here as a placeholder and will not run.
 name: Static (disabled)
 
+permissions: {}
+
 on:
   workflow_dispatch:
     inputs:
