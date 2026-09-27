@@ -179,9 +179,7 @@ classDiagram
         """Test view_diagrams function with HTML generation error."""
         (temp_project_dir / "test.mmd").write_text("graph LR\nA-->B")
 
-        with patch(
-            "d4_diag.viewer_mermaid.generate_html_viewer", side_effect=IOError("Generation failed")
-        ):
+        with patch("d4_diag.viewer_mermaid.generate_html_viewer", side_effect=IOError("Generation failed")):
             with pytest.raises(IOError, match="Failed to generate HTML viewer"):
                 view_diagrams(str(temp_project_dir))
 
@@ -275,8 +273,6 @@ flowchart TD
 
         uri = mock_browser.call_args[0][0]
         assert (
-            Path(uri.replace("file:///", "").replace("file://", "")).name.endswith(
-                "_d4_diag_viewer.html"
-            )
+            Path(uri.replace("file:///", "").replace("file://", "")).name.endswith("_d4_diag_viewer.html")
             or "_d4_diag_viewer.html" in uri
         )

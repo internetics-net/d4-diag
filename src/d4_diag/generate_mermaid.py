@@ -122,9 +122,7 @@ class CodeMapAnalyzer:
             pkg_parts = self._package_parts_for_file(source_rel)
             pkg_parts = pkg_parts[: max(0, len(pkg_parts) - node.level)]
             if node.module:
-                full_mod = (
-                    ".".join(pkg_parts + node.module.split(".")) if pkg_parts else node.module
-                )
+                full_mod = ".".join(pkg_parts + node.module.split(".")) if pkg_parts else node.module
                 info["imports"].append(full_mod)
                 self._resolve_import(source_rel, module_str=full_mod, level=0)
                 for alias in node.names:
@@ -161,9 +159,7 @@ class CodeMapAnalyzer:
     def generate_architecture(self, output_file: Optional[str] = None) -> str:
         """Generate architecture diagram. Returns mmd content as string."""
         lines = ["```mermaid", "graph LR"]
-        lines.append(
-            "    classDef fileStyle fill:#37474F,stroke:#263238,color:#ECEFF1,font-weight:bold;"
-        )
+        lines.append("    classDef fileStyle fill:#37474F,stroke:#263238,color:#ECEFF1,font-weight:bold;")
         lines.append("    classDef classNodeStyle fill:#1565C0,stroke:#0D47A1,color:white;")
         lines.append("    classDef funcStyle fill:#2E7D32,stroke:#1B5E20,color:white;")
         lines.append("")
@@ -185,9 +181,7 @@ class CodeMapAnalyzer:
                     lines.append(f"        {cid}[{qlabel(label)}]:::classNodeStyle")
                 for fn in info["functions"]:
                     fnid = sanitize_id(rel + "_" + fn)
-                    lines.append(
-                        "        {id}[{label}]:::funcStyle".format(id=fnid, label=qlabel(fn))
-                    )
+                    lines.append("        {id}[{label}]:::funcStyle".format(id=fnid, label=qlabel(fn)))
                 lines.append("    end")
             else:
                 lines.append(f"    {fid}[{qlabel(short)}]:::fileStyle")
@@ -271,9 +265,7 @@ class CodeMapAnalyzer:
     def generate_module_deps(self, output_file: Optional[str] = None) -> str:
         """Generate module dependencies diagram. Returns mmd content as string."""
         lines = ["```mermaid", "graph LR"]
-        lines.append(
-            "    classDef modStyle fill:#FF8F00,stroke:#E65100,color:white,font-weight:bold;"
-        )
+        lines.append("    classDef modStyle fill:#FF8F00,stroke:#E65100,color:white,font-weight:bold;")
         lines.append("")
 
         # only show files that participate in at least one import edge
@@ -308,9 +300,7 @@ class CodeMapAnalyzer:
             print(f"  Module dependencies -> {output_file}")
         return content
 
-    def generate_all(
-        self, save_files: bool = False, output_dir: Optional[str] = None
-    ) -> Dict[str, str]:
+    def generate_all(self, save_files: bool = False, output_dir: Optional[str] = None) -> Dict[str, str]:
         """Generate all diagrams and return as dictionary.
 
         Args:

@@ -80,9 +80,7 @@ class TestIntegration:
             analyzer.analyze_file(file_path)
 
         # Should still analyze valid files
-        valid_files = [
-            f for f in analyzer.files.keys() if "syntax_error.py" not in f and "large.py" not in f
-        ]
+        valid_files = [f for f in analyzer.files.keys() if "syntax_error.py" not in f and "large.py" not in f]
         assert len(valid_files) >= 4  # Original valid files
 
     def test_backward_compatibility_integration(self, temp_project_dir):

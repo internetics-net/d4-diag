@@ -116,9 +116,7 @@ class TestCLI:
             mock_analyzer = MagicMock()
             mock_analyzer_class.return_value = mock_analyzer
 
-            result = self.runner.invoke(
-                cli, ["analyze", str(temp_project_dir), "--output-dir", str(custom_output)]
-            )
+            result = self.runner.invoke(cli, ["analyze", str(temp_project_dir), "--output-dir", str(custom_output)])
             assert result.exit_code == EXIT_SUCCESS
 
             # Verify output directory was used
@@ -135,9 +133,7 @@ class TestCLI:
             mock_analyzer = MagicMock()
             mock_analyzer_class.return_value = mock_analyzer
 
-            result = self.runner.invoke(
-                cli, ["analyze", str(temp_project_dir), "--project-root", str(custom_root)]
-            )
+            result = self.runner.invoke(cli, ["analyze", str(temp_project_dir), "--project-root", str(custom_root)])
             assert result.exit_code == EXIT_SUCCESS
 
             # Verify custom project root was used
@@ -145,9 +141,7 @@ class TestCLI:
 
     def test_analyze_nonexistent_project_root(self, temp_project_dir):
         """Test analyze command with nonexistent project root."""
-        result = self.runner.invoke(
-            cli, ["analyze", str(temp_project_dir), "--project-root", "/nonexistent/root"]
-        )
+        result = self.runner.invoke(cli, ["analyze", str(temp_project_dir), "--project-root", "/nonexistent/root"])
         assert result.exit_code == EXIT_ERROR
         assert "Project root not found" in result.output
 

@@ -3,30 +3,24 @@ repos:
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        files: "^(src/.*\\.py|tests/.*\\.py|.*\\.yml|.*\\.yaml)$"
       - id: end-of-file-fixer
+        files: "^(src/.*\\.py|tests/.*\\.py|.*\\.yml|.*\\.yaml)$"
       - id: check-yaml
-        exclude: ^mkdocs\.yml$
+        files: "^(.*\\.yml|.*\\.yaml)$"
+        args: ['--unsafe']
       - id: check-added-large-files
-      - id: check-json
-      - id: check-toml
-      - id: check-merge-conflict
-      - id: debug-statements
-      - id: mixed-line-ending
-
-  - repo: https://github.com/psf/black
-    rev: 24.1.1
+        files: "^(src/.*\\.py|tests/.*\\.py|.*\\.yml|.*\\.yaml)$"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.2
     hooks:
-      - id: black
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+      - id: ruff
+        args: [--fix, --exit-zero]
+        files: "^(src|tests)/.*\\.py$"
+      - id: ruff-format
+        files: "^(src|tests)/.*\\.py$"
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
     hooks:
-      - id: flake8
-        additional_dependencies: [flake8-docstrings]
-        args: ['--config=.flake8']
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: ["--profile", "black", "--line-length", "100"]
+      - id: gitleaks
+        files: ".*"

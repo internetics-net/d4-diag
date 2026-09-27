@@ -16,9 +16,7 @@ def main():
     import subprocess
 
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", "tests/", "-v"], cwd=project_root, check=False
-        )
+        result = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-v"], cwd=project_root, check=False)
 
         if result.returncode == 0:
             print("\n🎉 All tests passed!")

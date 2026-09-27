@@ -123,9 +123,7 @@ def find_python_files(root_path: str) -> List[str]:
             dirnames.clear()
             continue
 
-        dirnames[:] = [
-            d for d in dirnames if not _is_excluded_dir(d) and not (current / d).is_symlink()
-        ]
+        dirnames[:] = [d for d in dirnames if not _is_excluded_dir(d) and not (current / d).is_symlink()]
 
         for fname in filenames:
             if not fname.endswith(".py"):

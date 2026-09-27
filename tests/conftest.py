@@ -74,9 +74,7 @@ class AuthService:
 
         # Create a virtual environment directory (should be excluded)
         (project_path / ".venv" / "lib" / "site-packages").mkdir(parents=True, exist_ok=True)
-        (project_path / ".venv" / "lib" / "site-packages" / "external.py").write_text(
-            "print('external')"
-        )
+        (project_path / ".venv" / "lib" / "site-packages" / "external.py").write_text("print('external')")
 
         # Create a cache directory (should be excluded)
         (project_path / "__pycache__").mkdir(exist_ok=True)

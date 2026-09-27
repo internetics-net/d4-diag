@@ -199,12 +199,8 @@ def analyze(paths, output_dir, verbose, project_root):
 
 
 @cli.command()
-@click.argument(
-    "diagrams_dir", type=click.Path(path_type=Path), default="docs/diagrams", required=False
-)
-@click.option(
-    "--no-browser", is_flag=True, help="Generate HTML viewer but don't open browser automatically"
-)
+@click.argument("diagrams_dir", type=click.Path(path_type=Path), default="docs/diagrams", required=False)
+@click.option("--no-browser", is_flag=True, help="Generate HTML viewer but don't open browser automatically")
 def viewer(diagrams_dir, no_browser):
     """View generated Mermaid diagrams in an interactive HTML viewer.
 

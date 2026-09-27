@@ -72,16 +72,12 @@ class TestGetBaseName:
         assert get_base_name(node) == "MyClass"
 
     def test_simple_attribute(self):
-        node = ast.Attribute(
-            value=ast.Name(id="module", ctx=ast.Load()), attr="Class", ctx=ast.Load()
-        )
+        node = ast.Attribute(value=ast.Name(id="module", ctx=ast.Load()), attr="Class", ctx=ast.Load())
         assert get_base_name(node) == "module.Class"
 
     def test_nested_attribute(self):
         node = ast.Attribute(
-            value=ast.Attribute(
-                value=ast.Name(id="package", ctx=ast.Load()), attr="module", ctx=ast.Load()
-            ),
+            value=ast.Attribute(value=ast.Name(id="package", ctx=ast.Load()), attr="module", ctx=ast.Load()),
             attr="Class",
             ctx=ast.Load(),
         )

@@ -37,9 +37,7 @@ def read_diagram_content(file_path: Path) -> str:
     try:
         size = file_path.stat().st_size
         if size > MAX_DIAGRAM_FILE_SIZE:
-            raise FileNotFoundError(
-                f"Diagram file too large ({size} bytes, max {MAX_DIAGRAM_FILE_SIZE}): {file_path}"
-            )
+            raise FileNotFoundError(f"Diagram file too large ({size} bytes, max {MAX_DIAGRAM_FILE_SIZE}): {file_path}")
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
         return content
@@ -97,9 +95,7 @@ def read_project_name(start_dir: Path) -> str:
     return start_dir.name
 
 
-def generate_html_viewer(
-    diagrams: Dict[str, str], output_path: str, project_name: str = "Project"
-) -> str:
+def generate_html_viewer(diagrams: Dict[str, str], output_path: str, project_name: str = "Project") -> str:
     """Generate an HTML file with all diagrams"""
     html_template = """<!DOCTYPE html>
 <html lang="en">
@@ -383,9 +379,7 @@ def generate_html_viewer(
     if not diagrams:
         tabs_html = ""
         diagrams_html = ""
-        no_diagrams_html = (
-            '<div class="no-diagrams">No diagrams found in the specified directory.</div>'
-        )
+        no_diagrams_html = '<div class="no-diagrams">No diagrams found in the specified directory.</div>'
     else:
         tabs = []
         diagram_sections = []
@@ -395,10 +389,7 @@ def generate_html_viewer(
 
             # Create tab
             safe_name = _escape_html(name)
-            tabs.append(
-                f'<button type="button" class="tab" data-diagram-id="{diagram_id}">'
-                f"{safe_name}</button>"
-            )
+            tabs.append(f'<button type="button" class="tab" data-diagram-id="{diagram_id}">{safe_name}</button>')
 
             mermaid_code = _escape_script_body(extract_mermaid_code(content))
             diagram_sections.append(
